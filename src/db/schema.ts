@@ -462,6 +462,157 @@ export const instituteSettings = pgTable("institute_settings", {
     .defaultNow(),
 });
 
+/* ============================================================
+ * Teachers — profile record for teaching staff (Phase 3)
+ * ============================================================ */
+export const teachers = pgTable(
+  "teachers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    employeeCode: text("employee_code").notNull(),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name"),
+    gender: genderEnum("gender"),
+    dob: timestamp("dob", { withTimezone: true }),
+    phone: text("phone"),
+    email: text("email"),
+    qualification: text("qualification"),
+    designation: text("designation"),
+    joinedOn: timestamp("joined_on", { withTimezone: true }),
+    address: text("address"),
+    photoUrl: text("photo_url"),
+    bio: text("bio"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("teachers_tenant_code_uniq").on(t.tenantId, t.employeeCode),
+    index("teachers_tenant_idx").on(t.tenantId),
+  ],
+);
+
+/* ============================================================
+ * Class ↔ Subject ↔ Teacher mapping
+ * ============================================================ */
+export const classSubjectTeachers = pgTable(
+  "class_subject_teachers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    sectionId: uuid("section_id").references(() => sections.id, {
+      onDelete: "cascade",
+    }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    teacherId: uuid("teacher_id")
+      .notNull()
+      .references(() => teachers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("cst_unique").on(
+      t.classId,
+      t.sectionId,
+      t.subjectId,
+      t.teacherId,
+    ),
+    index("cst_tenant_idx").on(t.tenantId),
+    index("cst_class_idx").on(t.classId),
+  ],
+);
+
+/* ============================================================
+ * Attendance
+ * ============================================================ */
+export const attendanceStatus = pgEnum("attendance_status", [
+  "present",
+  "absent",
+  "late",
+  "excused",
+]);
+
+export const studentAttendance = pgTable(
+  "student_attendance",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    sectionId: uuid("section_id")
+      .notNull()
+      .references(() => sections.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    date: text("date").notNull(), // ISO YYYY-MM-DD
+    status: attendanceStatus("status").notNull(),
+    note: text("note"),
+    markedById: uuid("marked_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("stu_att_unique").on(t.studentId, t.date),
+    index("stu_att_tenant_idx").on(t.tenantId),
+    index("stu_att_section_date_idx").on(t.sectionId, t.date),
+  ],
+);
+
+export const employeeAttendance = pgTable(
+  "employee_attendance",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    teacherId: uuid("teacher_id")
+      .notNull()
+      .references(() => teachers.id, { onDelete: "cascade" }),
+    date: text("date").notNull(),
+    status: attendanceStatus("status").notNull(),
+    checkIn: text("check_in"),
+    checkOut: text("check_out"),
+    note: text("note"),
+    markedById: uuid("marked_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("emp_att_unique").on(t.teacherId, t.date),
+    index("emp_att_tenant_idx").on(t.tenantId),
+    index("emp_att_date_idx").on(t.date),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Tenant = typeof tenants.$inferSelect;
@@ -473,3 +624,9 @@ export type Section = typeof sections.$inferSelect;
 export type Subject = typeof subjects.$inferSelect;
 export type Student = typeof students.$inferSelect;
 export type NewStudent = typeof students.$inferInsert;
+export type Teacher = typeof teachers.$inferSelect;
+export type NewTeacher = typeof teachers.$inferInsert;
+export type ClassSubjectTeacher = typeof classSubjectTeachers.$inferSelect;
+export type StudentAttendance = typeof studentAttendance.$inferSelect;
+export type EmployeeAttendance = typeof employeeAttendance.$inferSelect;
+

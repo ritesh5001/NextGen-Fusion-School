@@ -51,6 +51,7 @@ const nav: NavGroup[] = [
     items: [
       { to: "/app/academic-years", label: "Academic Years", icon: Calendar },
       { to: "/app/classes", label: "Classes & Sections", icon: BookOpen },
+      { to: "/app/subjects", label: "Subjects", icon: BookOpen },
       { to: "/app/attendance", label: "Attendance", icon: CalendarCheck },
       { to: "/app/exams", label: "Exams & Marks", icon: FileSpreadsheet },
       { to: "/app/library", label: "Library", icon: BookOpen },
