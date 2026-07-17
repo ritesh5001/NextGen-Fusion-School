@@ -1523,4 +1523,117 @@ export type BookIssue = typeof bookIssues.$inferSelect;
 export type Notice = typeof notices.$inferSelect;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
 
+/* ============================================================
+ * Phase 8 — ID Cards, Admissions, Notifications
+ * ============================================================ */
+export const admissionStatus = pgEnum("admission_status", [
+  "pending",
+  "under_review",
+  "approved",
+  "rejected",
+  "enrolled",
+]);
+
+export const idCardTemplates = pgTable(
+  "id_card_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    audience: text("audience").notNull().default("student"), // student|teacher|employee
+    orientation: text("orientation").notNull().default("portrait"),
+    widthMm: integer("width_mm").notNull().default(54),
+    heightMm: integer("height_mm").notNull().default(86),
+    accentColor: text("accent_color").notNull().default("#10b981"),
+    backgroundColor: text("background_color").notNull().default("#ffffff"),
+    textColor: text("text_color").notNull().default("#0a0a0a"),
+    logoUrl: text("logo_url"),
+    showPhoto: boolean("show_photo").notNull().default(true),
+    showQr: boolean("show_qr").notNull().default(true),
+    footerText: text("footer_text"),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("idcard_tpl_tenant_idx").on(t.tenantId)],
+);
+
+export const admissionApplications = pgTable(
+  "admission_applications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    applicationNo: text("application_no").notNull(),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
+    classAppliedId: uuid("class_applied_id").references(() => classes.id, {
+      onDelete: "set null",
+    }),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name"),
+    gender: genderEnum("gender"),
+    dob: text("dob"),
+    guardianName: text("guardian_name"),
+    guardianPhone: text("guardian_phone"),
+    guardianEmail: text("guardian_email"),
+    address: text("address"),
+    previousSchool: text("previous_school"),
+    remarks: text("remarks"),
+    status: admissionStatus("status").notNull().default("pending"),
+    reviewNote: text("review_note"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    enrolledStudentId: uuid("enrolled_student_id").references(() => students.id, {
+      onDelete: "set null",
+    }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("admission_no_uniq").on(t.tenantId, t.applicationNo),
+    index("admissions_tenant_idx").on(t.tenantId),
+    index("admissions_status_idx").on(t.status),
+  ],
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    body: text("body"),
+    link: text("link"),
+    category: text("category").notNull().default("general"),
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("notifs_user_idx").on(t.userId),
+    index("notifs_tenant_idx").on(t.tenantId),
+    index("notifs_read_idx").on(t.isRead),
+  ],
+);
+
+export type IdCardTemplate = typeof idCardTemplates.$inferSelect;
+export type AdmissionApplication = typeof admissionApplications.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+
+
 

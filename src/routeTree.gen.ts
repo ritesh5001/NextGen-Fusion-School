@@ -15,17 +15,21 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AuthResetRouteImport } from './routes/auth.reset'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
+import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTeachersRouteImport } from './routes/app.teachers'
 import { Route as AppSubjectsRouteImport } from './routes/app.subjects'
 import { Route as AppStudentsRouteImport } from './routes/app.students'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
+import { Route as AppReportsRouteImport } from './routes/app.reports'
 import { Route as AppPromotionRouteImport } from './routes/app.promotion'
 import { Route as AppPayrollRouteImport } from './routes/app.payroll'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppNoticesRouteImport } from './routes/app.notices'
 import { Route as AppMarksRouteImport } from './routes/app.marks'
 import { Route as AppLibraryRouteImport } from './routes/app.library'
+import { Route as AppIdCardsRouteImport } from './routes/app.id-cards'
 import { Route as AppHrmRouteImport } from './routes/app.hrm'
 import { Route as AppHostelRouteImport } from './routes/app.hostel'
 import { Route as AppGradesRouteImport } from './routes/app.grades'
@@ -34,6 +38,7 @@ import { Route as AppExamsRouteImport } from './routes/app.exams'
 import { Route as AppClassesRouteImport } from './routes/app.classes'
 import { Route as AppCalendarRouteImport } from './routes/app.calendar'
 import { Route as AppAttendanceRouteImport } from './routes/app.attendance'
+import { Route as AppAdmissionsRouteImport } from './routes/app.admissions'
 import { Route as AppAccountsRouteImport } from './routes/app.accounts'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
 import { Route as MarksheetExamIdStudentIdRouteImport } from './routes/marksheet.$examId.$studentId'
@@ -68,6 +73,11 @@ const AuthForgotRoute = AuthForgotRouteImport.update({
   path: '/auth/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplySlugRoute = ApplySlugRouteImport.update({
+  id: '/apply/$slug',
+  path: '/apply/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppTenantsRoute = AppTenantsRouteImport.update({
   id: '/tenants',
   path: '/tenants',
@@ -98,6 +108,11 @@ const AppRolesRoute = AppRolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPromotionRoute = AppPromotionRouteImport.update({
   id: '/promotion',
   path: '/promotion',
@@ -106,6 +121,11 @@ const AppPromotionRoute = AppPromotionRouteImport.update({
 const AppPayrollRoute = AppPayrollRouteImport.update({
   id: '/payroll',
   path: '/payroll',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNoticesRoute = AppNoticesRouteImport.update({
@@ -121,6 +141,11 @@ const AppMarksRoute = AppMarksRouteImport.update({
 const AppLibraryRoute = AppLibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIdCardsRoute = AppIdCardsRouteImport.update({
+  id: '/id-cards',
+  path: '/id-cards',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHrmRoute = AppHrmRouteImport.update({
@@ -163,6 +188,11 @@ const AppAttendanceRoute = AppAttendanceRouteImport.update({
   path: '/attendance',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdmissionsRoute = AppAdmissionsRouteImport.update({
+  id: '/admissions',
+  path: '/admissions',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAccountsRoute = AppAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
@@ -185,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
+  '/app/admissions': typeof AppAdmissionsRoute
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
@@ -193,17 +224,21 @@ export interface FileRoutesByFullPath {
   '/app/grades': typeof AppGradesRoute
   '/app/hostel': typeof AppHostelRoute
   '/app/hrm': typeof AppHrmRoute
+  '/app/id-cards': typeof AppIdCardsRoute
   '/app/library': typeof AppLibraryRoute
   '/app/marks': typeof AppMarksRoute
   '/app/notices': typeof AppNoticesRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
+  '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
@@ -214,6 +249,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
+  '/app/admissions': typeof AppAdmissionsRoute
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
@@ -222,17 +258,21 @@ export interface FileRoutesByTo {
   '/app/grades': typeof AppGradesRoute
   '/app/hostel': typeof AppHostelRoute
   '/app/hrm': typeof AppHrmRoute
+  '/app/id-cards': typeof AppIdCardsRoute
   '/app/library': typeof AppLibraryRoute
   '/app/marks': typeof AppMarksRoute
   '/app/notices': typeof AppNoticesRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
+  '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
@@ -245,6 +285,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
+  '/app/admissions': typeof AppAdmissionsRoute
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
@@ -253,17 +294,21 @@ export interface FileRoutesById {
   '/app/grades': typeof AppGradesRoute
   '/app/hostel': typeof AppHostelRoute
   '/app/hrm': typeof AppHrmRoute
+  '/app/id-cards': typeof AppIdCardsRoute
   '/app/library': typeof AppLibraryRoute
   '/app/marks': typeof AppMarksRoute
   '/app/notices': typeof AppNoticesRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
+  '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
@@ -277,6 +322,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/academic-years'
     | '/app/accounts'
+    | '/app/admissions'
     | '/app/attendance'
     | '/app/calendar'
     | '/app/classes'
@@ -285,17 +331,21 @@ export interface FileRouteTypes {
     | '/app/grades'
     | '/app/hostel'
     | '/app/hrm'
+    | '/app/id-cards'
     | '/app/library'
     | '/app/marks'
     | '/app/notices'
+    | '/app/notifications'
     | '/app/payroll'
     | '/app/promotion'
+    | '/app/reports'
     | '/app/roles'
     | '/app/settings'
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/apply/$slug'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
@@ -306,6 +356,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app/academic-years'
     | '/app/accounts'
+    | '/app/admissions'
     | '/app/attendance'
     | '/app/calendar'
     | '/app/classes'
@@ -314,17 +365,21 @@ export interface FileRouteTypes {
     | '/app/grades'
     | '/app/hostel'
     | '/app/hrm'
+    | '/app/id-cards'
     | '/app/library'
     | '/app/marks'
     | '/app/notices'
+    | '/app/notifications'
     | '/app/payroll'
     | '/app/promotion'
+    | '/app/reports'
     | '/app/roles'
     | '/app/settings'
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/apply/$slug'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
@@ -336,6 +391,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/academic-years'
     | '/app/accounts'
+    | '/app/admissions'
     | '/app/attendance'
     | '/app/calendar'
     | '/app/classes'
@@ -344,17 +400,21 @@ export interface FileRouteTypes {
     | '/app/grades'
     | '/app/hostel'
     | '/app/hrm'
+    | '/app/id-cards'
     | '/app/library'
     | '/app/marks'
     | '/app/notices'
+    | '/app/notifications'
     | '/app/payroll'
     | '/app/promotion'
+    | '/app/reports'
     | '/app/roles'
     | '/app/settings'
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/apply/$slug'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
@@ -365,6 +425,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  ApplySlugRoute: typeof ApplySlugRoute
   AuthForgotRoute: typeof AuthForgotRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetRoute: typeof AuthResetRoute
@@ -415,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/apply/$slug': {
+      id: '/apply/$slug'
+      path: '/apply/$slug'
+      fullPath: '/apply/$slug'
+      preLoaderRoute: typeof ApplySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/tenants': {
       id: '/app/tenants'
       path: '/tenants'
@@ -457,6 +525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRolesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/reports': {
+      id: '/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/promotion': {
       id: '/app/promotion'
       path: '/promotion'
@@ -469,6 +544,13 @@ declare module '@tanstack/react-router' {
       path: '/payroll'
       fullPath: '/app/payroll'
       preLoaderRoute: typeof AppPayrollRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/notices': {
@@ -490,6 +572,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/app/library'
       preLoaderRoute: typeof AppLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/id-cards': {
+      id: '/app/id-cards'
+      path: '/id-cards'
+      fullPath: '/app/id-cards'
+      preLoaderRoute: typeof AppIdCardsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/hrm': {
@@ -548,6 +637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAttendanceRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admissions': {
+      id: '/app/admissions'
+      path: '/admissions'
+      fullPath: '/app/admissions'
+      preLoaderRoute: typeof AppAdmissionsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/accounts': {
       id: '/app/accounts'
       path: '/accounts'
@@ -575,6 +671,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAcademicYearsRoute: typeof AppAcademicYearsRoute
   AppAccountsRoute: typeof AppAccountsRoute
+  AppAdmissionsRoute: typeof AppAdmissionsRoute
   AppAttendanceRoute: typeof AppAttendanceRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppClassesRoute: typeof AppClassesRoute
@@ -583,11 +680,14 @@ interface AppRouteChildren {
   AppGradesRoute: typeof AppGradesRoute
   AppHostelRoute: typeof AppHostelRoute
   AppHrmRoute: typeof AppHrmRoute
+  AppIdCardsRoute: typeof AppIdCardsRoute
   AppLibraryRoute: typeof AppLibraryRoute
   AppMarksRoute: typeof AppMarksRoute
   AppNoticesRoute: typeof AppNoticesRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppPayrollRoute: typeof AppPayrollRoute
   AppPromotionRoute: typeof AppPromotionRoute
+  AppReportsRoute: typeof AppReportsRoute
   AppRolesRoute: typeof AppRolesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppStudentsRoute: typeof AppStudentsRoute
@@ -600,6 +700,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAcademicYearsRoute: AppAcademicYearsRoute,
   AppAccountsRoute: AppAccountsRoute,
+  AppAdmissionsRoute: AppAdmissionsRoute,
   AppAttendanceRoute: AppAttendanceRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppClassesRoute: AppClassesRoute,
@@ -608,11 +709,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppGradesRoute: AppGradesRoute,
   AppHostelRoute: AppHostelRoute,
   AppHrmRoute: AppHrmRoute,
+  AppIdCardsRoute: AppIdCardsRoute,
   AppLibraryRoute: AppLibraryRoute,
   AppMarksRoute: AppMarksRoute,
   AppNoticesRoute: AppNoticesRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppPayrollRoute: AppPayrollRoute,
   AppPromotionRoute: AppPromotionRoute,
+  AppReportsRoute: AppReportsRoute,
   AppRolesRoute: AppRolesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppStudentsRoute: AppStudentsRoute,
@@ -627,6 +731,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  ApplySlugRoute: ApplySlugRoute,
   AuthForgotRoute: AuthForgotRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetRoute: AuthResetRoute,
