@@ -21,6 +21,7 @@ import { Route as AppSubjectsRouteImport } from './routes/app.subjects'
 import { Route as AppStudentsRouteImport } from './routes/app.students'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
+import { Route as AppMarksRouteImport } from './routes/app.marks'
 import { Route as AppGradesRouteImport } from './routes/app.grades'
 import { Route as AppExamsRouteImport } from './routes/app.exams'
 import { Route as AppClassesRouteImport } from './routes/app.classes'
@@ -87,6 +88,11 @@ const AppRolesRoute = AppRolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMarksRoute = AppMarksRouteImport.update({
+  id: '/marks',
+  path: '/marks',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGradesRoute = AppGradesRouteImport.update({
   id: '/grades',
   path: '/grades',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/app/classes': typeof AppClassesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/marks': typeof AppMarksRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/app/classes': typeof AppClassesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/marks': typeof AppMarksRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/app/classes': typeof AppClassesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/marks': typeof AppMarksRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/app/classes'
     | '/app/exams'
     | '/app/grades'
+    | '/app/marks'
     | '/app/roles'
     | '/app/settings'
     | '/app/students'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/app/classes'
     | '/app/exams'
     | '/app/grades'
+    | '/app/marks'
     | '/app/roles'
     | '/app/settings'
     | '/app/students'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/app/classes'
     | '/app/exams'
     | '/app/grades'
+    | '/app/marks'
     | '/app/roles'
     | '/app/settings'
     | '/app/students'
@@ -323,6 +335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRolesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/marks': {
+      id: '/app/marks'
+      path: '/marks'
+      fullPath: '/app/marks'
+      preLoaderRoute: typeof AppMarksRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/grades': {
       id: '/app/grades'
       path: '/grades'
@@ -367,6 +386,7 @@ interface AppRouteChildren {
   AppClassesRoute: typeof AppClassesRoute
   AppExamsRoute: typeof AppExamsRoute
   AppGradesRoute: typeof AppGradesRoute
+  AppMarksRoute: typeof AppMarksRoute
   AppRolesRoute: typeof AppRolesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppStudentsRoute: typeof AppStudentsRoute
@@ -382,6 +402,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppClassesRoute: AppClassesRoute,
   AppExamsRoute: AppExamsRoute,
   AppGradesRoute: AppGradesRoute,
+  AppMarksRoute: AppMarksRoute,
   AppRolesRoute: AppRolesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppStudentsRoute: AppStudentsRoute,
