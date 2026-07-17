@@ -2,47 +2,12 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1784329064451,
-      "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784329458174,
-      "tag": "0001_phase2_academic",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1784329600000,
-      "tag": "0002_phase3_teachers_attendance",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1784329700000,
-      "tag": "0003_phase4_exams",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1784329800000,
-      "tag": "0004_phase5_fees_accounts",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1784329900000,
-      "tag": "0005_phase6_hrm_payroll",
-      "breakpoints": true
-    }
+    { "idx": 0, "version": "7", "when": 1784329064451, "tag": "0000_init", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1784329458174, "tag": "0001_phase2_academic", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1784329600000, "tag": "0002_phase3_teachers_attendance", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1784329700000, "tag": "0003_phase4_exams", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1784329800000, "tag": "0004_phase5_fees_accounts", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1784329900000, "tag": "0005_phase6_hrm_payroll", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1784330000000, "tag": "0006_phase7_hostel_library_notices", "breakpoints": true }
   ]
 }

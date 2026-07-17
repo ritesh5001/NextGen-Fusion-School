@@ -1306,3 +1306,221 @@ export type EmployeeSalaryAssignment =
 export type Payslip = typeof payslips.$inferSelect;
 export type PayslipItem = typeof payslipItems.$inferSelect;
 
+/* ============================================================
+ * Phase 7 — Hostel, Library, Notices, Calendar
+ * ============================================================ */
+export const hostelType = pgEnum("hostel_type", ["boys", "girls", "mixed"]);
+export const allocationStatus = pgEnum("allocation_status", [
+  "active",
+  "vacated",
+]);
+export const borrowerType = pgEnum("borrower_type", ["student", "employee"]);
+export const issueStatus = pgEnum("issue_status", [
+  "issued",
+  "returned",
+  "overdue",
+  "lost",
+]);
+export const eventType = pgEnum("event_type", [
+  "holiday",
+  "exam",
+  "event",
+  "meeting",
+  "other",
+]);
+
+export const hostels = pgTable(
+  "hostels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    type: hostelType("type").notNull().default("boys"),
+    address: text("address"),
+    wardenName: text("warden_name"),
+    wardenPhone: text("warden_phone"),
+    capacity: integer("capacity").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("hostels_tenant_idx").on(t.tenantId)],
+);
+
+export const hostelRooms = pgTable(
+  "hostel_rooms",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    hostelId: uuid("hostel_id")
+      .notNull()
+      .references(() => hostels.id, { onDelete: "cascade" }),
+    roomNo: text("room_no").notNull(),
+    floor: text("floor"),
+    capacity: integer("capacity").notNull().default(1),
+    monthlyRent: integer("monthly_rent").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+  },
+  (t) => [
+    uniqueIndex("hostel_room_uniq").on(t.hostelId, t.roomNo),
+    index("hostel_rooms_tenant_idx").on(t.tenantId),
+  ],
+);
+
+export const hostelAllocations = pgTable(
+  "hostel_allocations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => hostelRooms.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    allocatedOn: text("allocated_on").notNull(),
+    vacatedOn: text("vacated_on"),
+    status: allocationStatus("status").notNull().default("active"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("hostel_alloc_tenant_idx").on(t.tenantId),
+    index("hostel_alloc_room_idx").on(t.roomId),
+    index("hostel_alloc_student_idx").on(t.studentId),
+  ],
+);
+
+export const books = pgTable(
+  "books",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    author: text("author"),
+    isbn: text("isbn"),
+    category: text("category"),
+    publisher: text("publisher"),
+    edition: text("edition"),
+    totalCopies: integer("total_copies").notNull().default(1),
+    availableCopies: integer("available_copies").notNull().default(1),
+    rackNo: text("rack_no"),
+    dailyFine: integer("daily_fine").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("books_tenant_idx").on(t.tenantId),
+    index("books_title_idx").on(t.title),
+  ],
+);
+
+export const bookIssues = pgTable(
+  "book_issues",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    bookId: uuid("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    borrowerType: borrowerType("borrower_type").notNull(),
+    studentId: uuid("student_id").references(() => students.id, {
+      onDelete: "set null",
+    }),
+    employeeId: uuid("employee_id").references(() => employees.id, {
+      onDelete: "set null",
+    }),
+    issuedOn: text("issued_on").notNull(),
+    dueDate: text("due_date").notNull(),
+    returnedOn: text("returned_on"),
+    fineAmount: integer("fine_amount").notNull().default(0),
+    fineCollected: integer("fine_collected").notNull().default(0),
+    status: issueStatus("status").notNull().default("issued"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("book_issues_tenant_idx").on(t.tenantId),
+    index("book_issues_book_idx").on(t.bookId),
+    index("book_issues_status_idx").on(t.status),
+  ],
+);
+
+export const notices = pgTable(
+  "notices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    audience: text("audience").notNull().default("all"),
+    publishFrom: text("publish_from"),
+    publishTo: text("publish_to"),
+    isPinned: boolean("is_pinned").notNull().default(false),
+    isPublished: boolean("is_published").notNull().default(true),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("notices_tenant_idx").on(t.tenantId)],
+);
+
+export const calendarEvents = pgTable(
+  "calendar_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    startDate: text("start_date").notNull(),
+    endDate: text("end_date").notNull(),
+    isAllDay: boolean("is_all_day").notNull().default(true),
+    type: eventType("type").notNull().default("event"),
+    color: text("color"),
+    location: text("location"),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("cal_events_tenant_idx").on(t.tenantId),
+    index("cal_events_start_idx").on(t.startDate),
+  ],
+);
+
+export type Hostel = typeof hostels.$inferSelect;
+export type HostelRoom = typeof hostelRooms.$inferSelect;
+export type HostelAllocation = typeof hostelAllocations.$inferSelect;
+export type Book = typeof books.$inferSelect;
+export type BookIssue = typeof bookIssues.$inferSelect;
+export type Notice = typeof notices.$inferSelect;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+
+

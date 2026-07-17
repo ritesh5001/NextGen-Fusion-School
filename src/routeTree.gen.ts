@@ -23,12 +23,16 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPromotionRouteImport } from './routes/app.promotion'
 import { Route as AppPayrollRouteImport } from './routes/app.payroll'
+import { Route as AppNoticesRouteImport } from './routes/app.notices'
 import { Route as AppMarksRouteImport } from './routes/app.marks'
+import { Route as AppLibraryRouteImport } from './routes/app.library'
 import { Route as AppHrmRouteImport } from './routes/app.hrm'
+import { Route as AppHostelRouteImport } from './routes/app.hostel'
 import { Route as AppGradesRouteImport } from './routes/app.grades'
 import { Route as AppFeesRouteImport } from './routes/app.fees'
 import { Route as AppExamsRouteImport } from './routes/app.exams'
 import { Route as AppClassesRouteImport } from './routes/app.classes'
+import { Route as AppCalendarRouteImport } from './routes/app.calendar'
 import { Route as AppAttendanceRouteImport } from './routes/app.attendance'
 import { Route as AppAccountsRouteImport } from './routes/app.accounts'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
@@ -104,14 +108,29 @@ const AppPayrollRoute = AppPayrollRouteImport.update({
   path: '/payroll',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNoticesRoute = AppNoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMarksRoute = AppMarksRouteImport.update({
   id: '/marks',
   path: '/marks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLibraryRoute = AppLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHrmRoute = AppHrmRouteImport.update({
   id: '/hrm',
   path: '/hrm',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHostelRoute = AppHostelRouteImport.update({
+  id: '/hostel',
+  path: '/hostel',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGradesRoute = AppGradesRouteImport.update({
@@ -132,6 +151,11 @@ const AppExamsRoute = AppExamsRouteImport.update({
 const AppClassesRoute = AppClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAttendanceRoute = AppAttendanceRouteImport.update({
@@ -162,12 +186,16 @@ export interface FileRoutesByFullPath {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/attendance': typeof AppAttendanceRoute
+  '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/hostel': typeof AppHostelRoute
   '/app/hrm': typeof AppHrmRoute
+  '/app/library': typeof AppLibraryRoute
   '/app/marks': typeof AppMarksRoute
+  '/app/notices': typeof AppNoticesRoute
   '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/roles': typeof AppRolesRoute
@@ -187,12 +215,16 @@ export interface FileRoutesByTo {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/attendance': typeof AppAttendanceRoute
+  '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/hostel': typeof AppHostelRoute
   '/app/hrm': typeof AppHrmRoute
+  '/app/library': typeof AppLibraryRoute
   '/app/marks': typeof AppMarksRoute
+  '/app/notices': typeof AppNoticesRoute
   '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/roles': typeof AppRolesRoute
@@ -214,12 +246,16 @@ export interface FileRoutesById {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/attendance': typeof AppAttendanceRoute
+  '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/hostel': typeof AppHostelRoute
   '/app/hrm': typeof AppHrmRoute
+  '/app/library': typeof AppLibraryRoute
   '/app/marks': typeof AppMarksRoute
+  '/app/notices': typeof AppNoticesRoute
   '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/roles': typeof AppRolesRoute
@@ -242,12 +278,16 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/attendance'
+    | '/app/calendar'
     | '/app/classes'
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
+    | '/app/hostel'
     | '/app/hrm'
+    | '/app/library'
     | '/app/marks'
+    | '/app/notices'
     | '/app/payroll'
     | '/app/promotion'
     | '/app/roles'
@@ -267,12 +307,16 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/attendance'
+    | '/app/calendar'
     | '/app/classes'
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
+    | '/app/hostel'
     | '/app/hrm'
+    | '/app/library'
     | '/app/marks'
+    | '/app/notices'
     | '/app/payroll'
     | '/app/promotion'
     | '/app/roles'
@@ -293,12 +337,16 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/attendance'
+    | '/app/calendar'
     | '/app/classes'
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
+    | '/app/hostel'
     | '/app/hrm'
+    | '/app/library'
     | '/app/marks'
+    | '/app/notices'
     | '/app/payroll'
     | '/app/promotion'
     | '/app/roles'
@@ -423,6 +471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPayrollRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/notices': {
+      id: '/app/notices'
+      path: '/notices'
+      fullPath: '/app/notices'
+      preLoaderRoute: typeof AppNoticesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/marks': {
       id: '/app/marks'
       path: '/marks'
@@ -430,11 +485,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMarksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/library': {
+      id: '/app/library'
+      path: '/library'
+      fullPath: '/app/library'
+      preLoaderRoute: typeof AppLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/hrm': {
       id: '/app/hrm'
       path: '/hrm'
       fullPath: '/app/hrm'
       preLoaderRoute: typeof AppHrmRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/hostel': {
+      id: '/app/hostel'
+      path: '/hostel'
+      fullPath: '/app/hostel'
+      preLoaderRoute: typeof AppHostelRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/grades': {
@@ -463,6 +532,13 @@ declare module '@tanstack/react-router' {
       path: '/classes'
       fullPath: '/app/classes'
       preLoaderRoute: typeof AppClassesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/calendar': {
+      id: '/app/calendar'
+      path: '/calendar'
+      fullPath: '/app/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/attendance': {
@@ -500,12 +576,16 @@ interface AppRouteChildren {
   AppAcademicYearsRoute: typeof AppAcademicYearsRoute
   AppAccountsRoute: typeof AppAccountsRoute
   AppAttendanceRoute: typeof AppAttendanceRoute
+  AppCalendarRoute: typeof AppCalendarRoute
   AppClassesRoute: typeof AppClassesRoute
   AppExamsRoute: typeof AppExamsRoute
   AppFeesRoute: typeof AppFeesRoute
   AppGradesRoute: typeof AppGradesRoute
+  AppHostelRoute: typeof AppHostelRoute
   AppHrmRoute: typeof AppHrmRoute
+  AppLibraryRoute: typeof AppLibraryRoute
   AppMarksRoute: typeof AppMarksRoute
+  AppNoticesRoute: typeof AppNoticesRoute
   AppPayrollRoute: typeof AppPayrollRoute
   AppPromotionRoute: typeof AppPromotionRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -521,12 +601,16 @@ const AppRouteChildren: AppRouteChildren = {
   AppAcademicYearsRoute: AppAcademicYearsRoute,
   AppAccountsRoute: AppAccountsRoute,
   AppAttendanceRoute: AppAttendanceRoute,
+  AppCalendarRoute: AppCalendarRoute,
   AppClassesRoute: AppClassesRoute,
   AppExamsRoute: AppExamsRoute,
   AppFeesRoute: AppFeesRoute,
   AppGradesRoute: AppGradesRoute,
+  AppHostelRoute: AppHostelRoute,
   AppHrmRoute: AppHrmRoute,
+  AppLibraryRoute: AppLibraryRoute,
   AppMarksRoute: AppMarksRoute,
+  AppNoticesRoute: AppNoticesRoute,
   AppPayrollRoute: AppPayrollRoute,
   AppPromotionRoute: AppPromotionRoute,
   AppRolesRoute: AppRolesRoute,
