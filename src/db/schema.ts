@@ -613,6 +613,139 @@ export const employeeAttendance = pgTable(
   ],
 );
 
+/* ============================================================
+ * Phase 4 — Grade scales, Exams, Exam Subjects, Marks
+ * ============================================================ */
+export const gradeScales = pgTable(
+  "grade_scales",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("grade_scales_tenant_idx").on(t.tenantId)],
+);
+
+export const grades = pgTable(
+  "grades",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    scaleId: uuid("scale_id")
+      .notNull()
+      .references(() => gradeScales.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // A+, A, B, ...
+    minPercent: integer("min_percent").notNull(),
+    maxPercent: integer("max_percent").notNull(),
+    gpa: text("gpa"),
+    remark: text("remark"),
+  },
+  (t) => [
+    index("grades_scale_idx").on(t.scaleId),
+    index("grades_tenant_idx").on(t.tenantId),
+  ],
+);
+
+export const exams = pgTable(
+  "exams",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
+    gradeScaleId: uuid("grade_scale_id").references(() => gradeScales.id, {
+      onDelete: "set null",
+    }),
+    name: text("name").notNull(),
+    term: text("term"),
+    startsOn: text("starts_on"),
+    endsOn: text("ends_on"),
+    isPublished: boolean("is_published").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("exams_tenant_idx").on(t.tenantId)],
+);
+
+export const examSubjects = pgTable(
+  "exam_subjects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    examId: uuid("exam_id")
+      .notNull()
+      .references(() => exams.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    maxMarks: integer("max_marks").notNull().default(100),
+    passMarks: integer("pass_marks").notNull().default(35),
+    examDate: text("exam_date"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("exam_subjects_unique").on(t.examId, t.classId, t.subjectId),
+    index("exam_subjects_tenant_idx").on(t.tenantId),
+    index("exam_subjects_exam_idx").on(t.examId),
+  ],
+);
+
+export const marks = pgTable(
+  "marks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    examSubjectId: uuid("exam_subject_id")
+      .notNull()
+      .references(() => examSubjects.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    marksObtained: integer("marks_obtained"),
+    isAbsent: boolean("is_absent").notNull().default(false),
+    remark: text("remark"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("marks_unique").on(t.examSubjectId, t.studentId),
+    index("marks_tenant_idx").on(t.tenantId),
+    index("marks_student_idx").on(t.studentId),
+  ],
+);
+
+export type GradeScale = typeof gradeScales.$inferSelect;
+export type Grade = typeof grades.$inferSelect;
+export type Exam = typeof exams.$inferSelect;
+export type NewExam = typeof exams.$inferInsert;
+export type ExamSubject = typeof examSubjects.$inferSelect;
+export type Mark = typeof marks.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Tenant = typeof tenants.$inferSelect;
