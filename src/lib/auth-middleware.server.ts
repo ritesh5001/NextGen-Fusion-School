@@ -47,23 +47,20 @@ export const requireAuth = createMiddleware().server(async ({ next }) => {
 export const optionalAuth = createMiddleware().server(async ({ next }) => {
   const header =
     getRequestHeader("authorization") ?? getRequestHeader("Authorization");
-  if (!header || !header.toLowerCase().startsWith("bearer ")) {
-    return next({ context: { auth: null } });
+  let auth: AuthContext | null = null;
+  if (header && header.toLowerCase().startsWith("bearer ")) {
+    try {
+      const claims = await verifyAccessToken(header.slice(7).trim());
+      auth = {
+        userId: claims.sub,
+        tenantId: claims.tid,
+        isSuperAdmin: claims.sa,
+        perms: claims.perms,
+        claims,
+      };
+    } catch {
+      auth = null;
+    }
   }
-  try {
-    const claims = await verifyAccessToken(header.slice(7).trim());
-    return next({
-      context: {
-        auth: {
-          userId: claims.sub,
-          tenantId: claims.tid,
-          isSuperAdmin: claims.sa,
-          perms: claims.perms,
-          claims,
-        } satisfies AuthContext,
-      },
-    });
-  } catch {
-    return next({ context: { auth: null } });
-  }
+  return next({ context: { auth } });
 });
