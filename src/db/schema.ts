@@ -1577,7 +1577,7 @@ export const admissionApplications = pgTable(
     }),
     firstName: text("first_name").notNull(),
     lastName: text("last_name"),
-    gender: gender("gender"),
+    gender: genderEnum("gender"),
     dob: text("dob"),
     guardianName: text("guardian_name"),
     guardianPhone: text("guardian_phone"),
