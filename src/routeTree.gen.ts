@@ -17,6 +17,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppStudentsRouteImport } from './routes/app.students'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppClassesRouteImport } from './routes/app.classes'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
@@ -61,6 +62,11 @@ const AppStudentsRoute = AppStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRolesRoute = AppRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/classes': typeof AppClassesRoute
   '/app/roles': typeof AppRolesRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
   '/app/tenants': typeof AppTenantsRoute
   '/auth/forgot': typeof AuthForgotRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/classes': typeof AppClassesRoute
   '/app/roles': typeof AppRolesRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
   '/app/tenants': typeof AppTenantsRoute
   '/auth/forgot': typeof AuthForgotRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/classes': typeof AppClassesRoute
   '/app/roles': typeof AppRolesRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/students': typeof AppStudentsRoute
   '/app/tenants': typeof AppTenantsRoute
   '/auth/forgot': typeof AuthForgotRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/classes'
     | '/app/roles'
+    | '/app/settings'
     | '/app/students'
     | '/app/tenants'
     | '/auth/forgot'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/classes'
     | '/app/roles'
+    | '/app/settings'
     | '/app/students'
     | '/app/tenants'
     | '/auth/forgot'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/classes'
     | '/app/roles'
+    | '/app/settings'
     | '/app/students'
     | '/app/tenants'
     | '/auth/forgot'
@@ -223,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStudentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/roles': {
       id: '/app/roles'
       path: '/roles'
@@ -251,6 +270,7 @@ interface AppRouteChildren {
   AppAcademicYearsRoute: typeof AppAcademicYearsRoute
   AppClassesRoute: typeof AppClassesRoute
   AppRolesRoute: typeof AppRolesRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppStudentsRoute: typeof AppStudentsRoute
   AppTenantsRoute: typeof AppTenantsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -260,6 +280,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAcademicYearsRoute: AppAcademicYearsRoute,
   AppClassesRoute: AppClassesRoute,
   AppRolesRoute: AppRolesRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppStudentsRoute: AppStudentsRoute,
   AppTenantsRoute: AppTenantsRoute,
   AppIndexRoute: AppIndexRoute,
