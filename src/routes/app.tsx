@@ -131,9 +131,9 @@ function AppLayout() {
 
         <div className="border-b border-sidebar-border p-3">
           <button className="flex w-full items-center justify-between rounded-md bg-sidebar-accent px-3 py-2 text-left text-xs transition hover:bg-accent">
-            <div>
+            <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">School</div>
-              <div className="mt-0.5 text-sm font-medium text-sidebar-foreground">Delhi Public School</div>
+              <div className="mt-0.5 truncate text-sm font-medium text-sidebar-foreground">{schoolName}</div>
             </div>
             <ChevronDown className="size-4 text-sidebar-muted" />
           </button>
