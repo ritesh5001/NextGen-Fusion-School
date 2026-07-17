@@ -15,6 +15,20 @@
       "when": 1784329458174,
       "tag": "0001_phase2_academic",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784329600000,
+      "tag": "0002_phase3_teachers_attendance",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784329700000,
+      "tag": "0003_phase4_exams",
+      "breakpoints": true
     }
   ]
 }
