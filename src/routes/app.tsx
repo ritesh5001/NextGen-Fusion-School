@@ -1,4 +1,5 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -19,8 +20,11 @@ import {
   Settings,
   Search,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getSession, setSession, subscribeSession, type SessionUser } from "@/lib/session";
+import { logout as logoutFn } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -79,6 +83,42 @@ const nav: NavGroup[] = [
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const [user, setUser] = useState<SessionUser | null>(() => getSession()?.user ?? null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const s = getSession();
+    setUser(s?.user ?? null);
+    setReady(true);
+    if (!s) {
+      navigate({ to: "/auth/login", search: { redirect: window.location.pathname } });
+    }
+    return subscribeSession((next) => setUser(next?.user ?? null));
+  }, [nav]);
+
+  async function handleLogout() {
+    const s = getSession();
+    try {
+      if (s?.refreshToken) await logoutFn({ data: { refreshToken: s.refreshToken } });
+    } catch {
+      /* ignore */
+    }
+    setSession(null);
+    navigate({ to: "/auth/login" });
+  }
+
+  if (!ready || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+
+  const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+  const roleLabel = user.isSuperAdmin ? "Super admin" : user.tenant?.name ?? "Member";
+  const schoolName = user.tenant?.name ?? "Platform";
 
   return (
     <div className="flex min-h-screen w-full bg-surface-muted">
@@ -91,9 +131,9 @@ function AppLayout() {
 
         <div className="border-b border-sidebar-border p-3">
           <button className="flex w-full items-center justify-between rounded-md bg-sidebar-accent px-3 py-2 text-left text-xs transition hover:bg-accent">
-            <div>
+            <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">School</div>
-              <div className="mt-0.5 text-sm font-medium text-sidebar-foreground">Delhi Public School</div>
+              <div className="mt-0.5 truncate text-sm font-medium text-sidebar-foreground">{schoolName}</div>
             </div>
             <ChevronDown className="size-4 text-sidebar-muted" />
           </button>
@@ -131,11 +171,20 @@ function AppLayout() {
 
         <div className="border-t border-sidebar-border p-3">
           <div className="flex items-center gap-3 rounded-md px-2 py-2">
-            <div className="size-8 rounded-full bg-primary/20 ring-1 ring-primary/30" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold">Dr. A. Sharma</div>
-              <div className="truncate text-[10px] text-sidebar-muted">Principal</div>
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary ring-1 ring-primary/30">
+              {(user.firstName?.[0] ?? user.email[0]).toUpperCase()}
             </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-semibold">{displayName}</div>
+              <div className="truncate text-[10px] text-sidebar-muted">{roleLabel}</div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              className="rounded-md p-1.5 text-sidebar-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <LogOut className="size-4" />
+            </button>
           </div>
         </div>
       </aside>
