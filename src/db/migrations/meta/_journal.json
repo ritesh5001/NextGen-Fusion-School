@@ -10,6 +10,8 @@
     { "idx": 5, "version": "7", "when": 1784329900000, "tag": "0005_phase6_hrm_payroll", "breakpoints": true },
     { "idx": 6, "version": "7", "when": 1784330000000, "tag": "0006_phase7_hostel_library_notices", "breakpoints": true },
     { "idx": 7, "version": "7", "when": 1784330100000, "tag": "0007_phase8_idcards_admissions_notifs", "breakpoints": true },
-    { "idx": 8, "version": "7", "when": 1784330200000, "tag": "0008_phase9_cms", "breakpoints": true }
+    { "idx": 8, "version": "7", "when": 1784330200000, "tag": "0008_phase9_cms", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1784330300000, "tag": "0009_phase10_settings_logs", "breakpoints": true }
   ]
 }
+

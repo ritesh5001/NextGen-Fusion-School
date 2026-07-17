@@ -21,7 +21,9 @@ import {
   Search,
   ChevronDown,
   LogOut,
+  Wrench,
 } from "lucide-react";
+
 import type { LucideIcon } from "lucide-react";
 import { getSession, setSession, subscribeSession, type SessionUser } from "@/lib/session";
 import { logout as logoutFn } from "@/lib/auth.functions";
@@ -88,8 +90,10 @@ const nav: NavGroup[] = [
       { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
       { to: "/app/settings", label: "Settings", icon: Settings },
+      { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
     ],
   },
+
 ];
 
 const superAdminNav: NavGroup = {

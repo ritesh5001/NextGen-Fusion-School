@@ -457,10 +457,25 @@ export const instituteSettings = pgTable("institute_settings", {
   timezone: text("timezone").notNull().default("Asia/Kolkata"),
   currency: text("currency").notNull().default("INR"),
   currencySymbol: text("currency_symbol").notNull().default("₹"),
+  // SMTP / email (Phase 10)
+  smtpHost: text("smtp_host"),
+  smtpPort: integer("smtp_port"),
+  smtpUsername: text("smtp_username"),
+  smtpPassword: text("smtp_password"),
+  smtpFromEmail: text("smtp_from_email"),
+  smtpFromName: text("smtp_from_name"),
+  smtpSecure: boolean("smtp_secure").notNull().default(true),
+  // Report settings (Phase 10)
+  reportHeader: text("report_header"),
+  reportFooter: text("report_footer"),
+  reportLogoUrl: text("report_logo_url"),
+  reportSignatureUrl: text("report_signature_url"),
+  reportPrincipalName: text("report_principal_name"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
+
 
 /* ============================================================
  * Teachers — profile record for teaching staff (Phase 3)
@@ -1808,6 +1823,36 @@ export type SiteFaq = typeof siteFaqs.$inferSelect;
 export type SiteTimelineItem = typeof siteTimeline.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+/* ============================================================
+ * Phase 10 — System logs (audit / activity trail)
+ * ============================================================ */
+export const systemLogs = pgTable(
+  "system_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id").references(() => tenants.id, {
+      onDelete: "cascade",
+    }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    level: text("level").notNull().default("info"), // info | warn | error
+    category: text("category").notNull().default("system"),
+    message: text("message").notNull(),
+    metadata: text("metadata"), // JSON string
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("system_logs_tenant_idx").on(t.tenantId),
+    index("system_logs_created_idx").on(t.createdAt),
+    index("system_logs_level_idx").on(t.level),
+  ],
+);
+
+export type SystemLog = typeof systemLogs.$inferSelect;
+
 
 
 
