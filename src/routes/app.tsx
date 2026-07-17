@@ -66,9 +66,11 @@ const nav: NavGroup[] = [
     label: "Finance",
     items: [
       { to: "/app/fees", label: "Fees", icon: Wallet },
+      { to: "/app/payroll", label: "Payroll", icon: Wallet },
       { to: "/app/accounts", label: "Accounts", icon: Landmark },
     ],
   },
+
   {
     label: "Operations",
     items: [
