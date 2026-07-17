@@ -1635,5 +1635,180 @@ export type IdCardTemplate = typeof idCardTemplates.$inferSelect;
 export type AdmissionApplication = typeof admissionApplications.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 
+/* ============================================================
+ * Phase 9 — Public Website / CMS
+ * ============================================================ */
+export const siteMeta = pgTable("site_meta", {
+  tenantId: uuid("tenant_id")
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  heroTitle: text("hero_title"),
+  heroSubtitle: text("hero_subtitle"),
+  heroImageUrl: text("hero_image_url"),
+  aboutHtml: text("about_html"),
+  missionHtml: text("mission_html"),
+  visionHtml: text("vision_html"),
+  footerText: text("footer_text"),
+  logoUrl: text("logo_url"),
+  faviconUrl: text("favicon_url"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  contactAddress: text("contact_address"),
+  mapEmbed: text("map_embed"),
+  socialFacebook: text("social_facebook"),
+  socialInstagram: text("social_instagram"),
+  socialTwitter: text("social_twitter"),
+  socialYoutube: text("social_youtube"),
+  socialLinkedin: text("social_linkedin"),
+  googleAnalyticsId: text("google_analytics_id"),
+  language: text("language").notNull().default("en"),
+  isPublished: boolean("is_published").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const siteSliders = pgTable(
+  "site_sliders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    subtitle: text("subtitle"),
+    imageUrl: text("image_url").notNull(),
+    ctaLabel: text("cta_label"),
+    ctaUrl: text("cta_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("site_sliders_tenant_idx").on(t.tenantId)],
+);
+
+export const siteTestimonials = pgTable(
+  "site_testimonials",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    authorName: text("author_name").notNull(),
+    authorRole: text("author_role"),
+    quote: text("quote").notNull(),
+    avatarUrl: text("avatar_url"),
+    rating: integer("rating").notNull().default(5),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("site_testimonials_tenant_idx").on(t.tenantId)],
+);
+
+export const siteGallery = pgTable(
+  "site_gallery",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    title: text("title"),
+    imageUrl: text("image_url").notNull(),
+    category: text("category").notNull().default("general"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("site_gallery_tenant_idx").on(t.tenantId)],
+);
+
+export const siteFaqs = pgTable(
+  "site_faqs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    category: text("category").notNull().default("general"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+  },
+  (t) => [index("site_faqs_tenant_idx").on(t.tenantId)],
+);
+
+export const siteTimeline = pgTable(
+  "site_timeline",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    yearLabel: text("year_label").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("site_timeline_tenant_idx").on(t.tenantId)],
+);
+
+export const contactMessages = pgTable(
+  "contact_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    subject: text("subject"),
+    message: text("message").notNull(),
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("contact_messages_tenant_idx").on(t.tenantId),
+    index("contact_messages_read_idx").on(t.isRead),
+  ],
+);
+
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("newsletter_tenant_email_uniq").on(t.tenantId, t.email),
+    index("newsletter_tenant_idx").on(t.tenantId),
+  ],
+);
+
+export type SiteMeta = typeof siteMeta.$inferSelect;
+export type SiteSlider = typeof siteSliders.$inferSelect;
+export type SiteTestimonial = typeof siteTestimonials.$inferSelect;
+export type SiteGalleryItem = typeof siteGallery.$inferSelect;
+export type SiteFaq = typeof siteFaqs.$inferSelect;
+export type SiteTimelineItem = typeof siteTimeline.$inferSelect;
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+
 
 
