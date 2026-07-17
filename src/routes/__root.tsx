@@ -77,9 +77,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ScholarFlow — The operating system for modern schools" },
+      { title: "NextGen Fusion School — The operating system for modern schools" },
       { name: "description", content: "One platform to run admissions, fees, exams, attendance, HR and 22 more modules. Built for Indian schools, priced from ₹500/month." },
-      { property: "og:title", content: "ScholarFlow — The operating system for modern schools" },
+      { property: "og:title", content: "NextGen Fusion School — The operating system for modern schools" },
       { property: "og:description", content: "26 integrated modules to run your school. From ₹500/month." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

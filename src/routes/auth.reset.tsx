@@ -10,7 +10,7 @@ export const Route = createFileRoute("/auth/reset")({
   validateSearch: z.object({ token: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Set new password — ScholarFlow" },
+      { title: "Set new password — NextGen Fusion School" },
       { name: "robots", content: "noindex" },
     ],
   }),

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth/forgot")({
   head: () => ({
     meta: [
-      { title: "Forgot password — ScholarFlow" },
+      { title: "Forgot password — NextGen Fusion School" },
       { name: "robots", content: "noindex" },
     ],
   }),

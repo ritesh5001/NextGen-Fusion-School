@@ -49,6 +49,8 @@ const nav: NavGroup[] = [
   {
     label: "Academic",
     items: [
+      { to: "/app/academic-years", label: "Academic Years", icon: Calendar },
+      { to: "/app/classes", label: "Classes & Sections", icon: BookOpen },
       { to: "/app/attendance", label: "Attendance", icon: CalendarCheck },
       { to: "/app/exams", label: "Exams & Marks", icon: FileSpreadsheet },
       { to: "/app/library", label: "Library", icon: BookOpen },
@@ -75,11 +77,17 @@ const nav: NavGroup[] = [
   {
     label: "Institute",
     items: [
+      { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
+
+const superAdminNav: NavGroup = {
+  label: "Platform",
+  items: [{ to: "/app/tenants", label: "Schools (Tenants)", icon: Landmark }],
+};
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -126,7 +134,7 @@ function AppLayout() {
       <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
           <span className="size-6 rounded-md bg-primary" />
-          <span className="font-display text-sm font-semibold tracking-tight">ScholarFlow</span>
+          <span className="font-display text-sm font-semibold tracking-tight">NextGen Fusion School</span>
         </div>
 
         <div className="border-b border-sidebar-border p-3">
@@ -140,7 +148,7 @@ function AppLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
-          {nav.map((group) => (
+          {(user.isSuperAdmin ? [superAdminNav, ...nav] : nav).map((group) => (
             <div key={group.label} className="mb-4">
               <div className="mb-1 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-sidebar-muted">
                 {group.label}
