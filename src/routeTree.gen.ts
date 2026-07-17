@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as SchoolSlugRouteImport } from './routes/school.$slug'
 import { Route as AuthResetRouteImport } from './routes/auth.reset'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
@@ -58,6 +59,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const SchoolSlugRoute = SchoolSlugRouteImport.update({
+  id: '/school/$slug',
+  path: '/school/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthResetRoute = AuthResetRouteImport.update({
   id: '/auth/reset',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
+  '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
 }
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
+  '/school/$slug': typeof SchoolSlugRoute
   '/app': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
 }
@@ -321,6 +329,7 @@ export interface FileRoutesById {
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
+  '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
 }
@@ -359,6 +368,7 @@ export interface FileRouteTypes {
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
+    | '/school/$slug'
     | '/app/'
     | '/marksheet/$examId/$studentId'
   fileRoutesByTo: FileRoutesByTo
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
+    | '/school/$slug'
     | '/app'
     | '/marksheet/$examId/$studentId'
   id:
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
+    | '/school/$slug'
     | '/app/'
     | '/marksheet/$examId/$studentId'
   fileRoutesById: FileRoutesById
@@ -441,6 +453,7 @@ export interface RootRouteChildren {
   AuthForgotRoute: typeof AuthForgotRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetRoute: typeof AuthResetRoute
+  SchoolSlugRoute: typeof SchoolSlugRoute
   MarksheetExamIdStudentIdRoute: typeof MarksheetExamIdStudentIdRoute
 }
 
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/school/$slug': {
+      id: '/school/$slug'
+      path: '/school/$slug'
+      fullPath: '/school/$slug'
+      preLoaderRoute: typeof SchoolSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/reset': {
       id: '/auth/reset'
@@ -756,6 +776,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthForgotRoute: AuthForgotRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetRoute: AuthResetRoute,
+  SchoolSlugRoute: SchoolSlugRoute,
   MarksheetExamIdStudentIdRoute: MarksheetExamIdStudentIdRoute,
 }
 export const routeTree = rootRouteImport
