@@ -83,7 +83,7 @@ const nav: NavGroup[] = [
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const [user, setUser] = useState<SessionUser | null>(() => getSession()?.user ?? null);
   const [ready, setReady] = useState(false);
 
@@ -92,7 +92,7 @@ function AppLayout() {
     setUser(s?.user ?? null);
     setReady(true);
     if (!s) {
-      nav({ to: "/auth/login", search: { redirect: window.location.pathname } });
+      navigate({ to: "/auth/login", search: { redirect: window.location.pathname } });
     }
     return subscribeSession((next) => setUser(next?.user ?? null));
   }, [nav]);
@@ -105,7 +105,7 @@ function AppLayout() {
       /* ignore */
     }
     setSession(null);
-    nav({ to: "/auth/login" });
+    navigate({ to: "/auth/login" });
   }
 
   if (!ready || !user) {
