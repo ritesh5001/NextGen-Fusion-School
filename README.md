@@ -1,4 +1,4 @@
-# ScholarFlow — School Management SaaS
+# NextGen Fusion School — School Management SaaS
 
 Multi-tenant school management system. Built on TanStack Start (React 19 + Vite),
 Drizzle ORM, PostgreSQL, and a custom JWT auth layer. Portable — no Supabase,

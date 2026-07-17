@@ -126,7 +126,7 @@ function AppLayout() {
       <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
           <span className="size-6 rounded-md bg-primary" />
-          <span className="font-display text-sm font-semibold tracking-tight">ScholarFlow</span>
+          <span className="font-display text-sm font-semibold tracking-tight">NextGen Fusion School</span>
         </div>
 
         <div className="border-b border-sidebar-border p-3">

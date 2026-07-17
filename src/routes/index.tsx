@@ -71,7 +71,7 @@ function MarketingHome() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
         <Link to="/" className="flex items-center gap-2">
           <span className="size-6 rounded-md bg-primary" />
-          <span className="font-display text-lg font-semibold tracking-tight">ScholarFlow</span>
+          <span className="font-display text-lg font-semibold tracking-tight">NextGen Fusion School</span>
         </Link>
         <div className="hidden gap-8 text-sm font-medium text-muted-foreground md:flex">
           <a href="#modules" className="hover:text-foreground">Modules</a>
@@ -265,7 +265,7 @@ function MarketingHome() {
       <section className="border-b border-border bg-surface-muted py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <p className="font-display text-2xl font-medium leading-relaxed tracking-tight text-balance md:text-3xl">
-            "ScholarFlow replaced four tools we were paying for. Admissions, fees, and exam reports now take a fraction of the time — and parents finally get a modern portal."
+            "NextGen Fusion School replaced four tools we were paying for. Admissions, fees, and exam reports now take a fraction of the time — and parents finally get a modern portal."
           </p>
           <div className="mt-8 flex items-center justify-center gap-3 text-sm">
             <div className="size-10 rounded-full bg-primary/20 ring-1 ring-primary/30" />
@@ -281,7 +281,7 @@ function MarketingHome() {
       <section className="py-24">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h2 className="font-display text-4xl font-medium tracking-tight md:text-5xl">Ready in a weekend. Priced like a utility.</h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Try ScholarFlow free for 14 days. No card required. Bring your existing data — we'll help you migrate.</p>
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Try NextGen Fusion School free for 14 days. No card required. Bring your existing data — we'll help you migrate.</p>
           <Link
             to="/app"
             className="mt-8 inline-flex items-center gap-1.5 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground ring-1 ring-primary/20 transition hover:opacity-90"
@@ -296,7 +296,7 @@ function MarketingHome() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-xs text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="size-4 rounded bg-primary" />
-            <span>© {new Date().getFullYear()} ScholarFlow. Made in India.</span>
+            <span>© {new Date().getFullYear()} NextGen Fusion School. Made in India.</span>
           </div>
           <div className="flex gap-6">
             <a href="#" className="hover:text-foreground">Privacy</a>

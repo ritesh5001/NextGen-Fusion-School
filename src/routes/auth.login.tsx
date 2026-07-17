@@ -16,8 +16,8 @@ export const Route = createFileRoute("/auth/login")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Sign in — ScholarFlow" },
-      { name: "description", content: "Sign in to your school's ScholarFlow workspace." },
+      { title: "Sign in — NextGen Fusion School" },
+      { name: "description", content: "Sign in to your school's NextGen Fusion School workspace." },
       { name: "robots", content: "noindex" },
     ],
   }),
