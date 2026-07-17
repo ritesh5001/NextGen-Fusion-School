@@ -780,9 +780,12 @@ function NewInvoiceDialog({ onClose }: { onClose: (created: boolean) => void }) 
 
   async function submit(fd: FormData) {
     const studentId = String(fd.get("studentId") ?? "");
-    if (!studentId) return toast.error("Select a student");
-    if (items.length === 0 || items.every((i) => !i.description))
-      return toast.error("Add at least one item");
+    if (!studentId) { toast.error("Select a student"); return; }
+    if (items.length === 0 || items.every((i) => !i.description)) {
+      toast.error("Add at least one item");
+      return;
+    }
+
     try {
       await create({
         data: {

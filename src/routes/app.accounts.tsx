@@ -315,7 +315,7 @@ function LedgerTab() {
     try {
       const headIdVal = String(fd.get("accountHeadId") ?? "");
       const head = heads.find((h) => h.id === headIdVal);
-      if (!head) return toast.error("Choose an account head");
+      if (!head) { toast.error("Choose an account head"); return; }
       await save({
         data: {
           accountHeadId: headIdVal,
