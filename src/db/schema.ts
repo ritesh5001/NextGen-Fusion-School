@@ -323,8 +323,153 @@ export const rolePermissionsRelations = relations(
   }),
 );
 
+/* ============================================================
+ * Academic — Classes, Sections, Subjects
+ * ============================================================ */
+export const classes = pgTable(
+  "classes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // e.g. "Class 10", "Grade 5"
+    numericGrade: integer("numeric_grade"), // 1..12 for ordering; null = other
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("classes_tenant_idx").on(t.tenantId),
+    index("classes_year_idx").on(t.academicYearId),
+  ],
+);
+
+export const sections = pgTable(
+  "sections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    name: text("name").notNull(), // "A", "B", "Red"
+    capacity: integer("capacity").notNull().default(40),
+    classTeacherId: uuid("class_teacher_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("sections_class_idx").on(t.classId)],
+);
+
+export const subjects = pgTable(
+  "subjects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: text("code"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("subjects_tenant_code_uniq")
+      .on(t.tenantId, t.code)
+      .where(sql`${t.code} is not null`),
+    index("subjects_tenant_idx").on(t.tenantId),
+  ],
+);
+
+/* ============================================================
+ * Students
+ * ============================================================ */
+export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
+
+export const students = pgTable(
+  "students",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    admissionNo: text("admission_no").notNull(),
+    rollNo: text("roll_no"),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name"),
+    gender: genderEnum("gender"),
+    dob: timestamp("dob", { withTimezone: true }),
+    phone: text("phone"),
+    email: text("email"),
+    address: text("address"),
+    photoUrl: text("photo_url"),
+    guardianName: text("guardian_name"),
+    guardianPhone: text("guardian_phone"),
+    guardianEmail: text("guardian_email"),
+    classId: uuid("class_id").references(() => classes.id, {
+      onDelete: "set null",
+    }),
+    sectionId: uuid("section_id").references(() => sections.id, {
+      onDelete: "set null",
+    }),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("students_tenant_admission_uniq").on(t.tenantId, t.admissionNo),
+    index("students_tenant_idx").on(t.tenantId),
+    index("students_class_idx").on(t.classId),
+    index("students_section_idx").on(t.sectionId),
+  ],
+);
+
+/* ============================================================
+ * Institute settings — one row per tenant (key/value blob)
+ * ============================================================ */
+export const instituteSettings = pgTable("institute_settings", {
+  tenantId: uuid("tenant_id")
+    .primaryKey()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  website: text("website"),
+  motto: text("motto"),
+  timezone: text("timezone").notNull().default("Asia/Kolkata"),
+  currency: text("currency").notNull().default("INR"),
+  currencySymbol: text("currency_symbol").notNull().default("₹"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Tenant = typeof tenants.$inferSelect;
 export type Role = typeof roles.$inferSelect;
 export type Permission = typeof permissions.$inferSelect;
+export type AcademicYear = typeof academicYears.$inferSelect;
+export type Class = typeof classes.$inferSelect;
+export type Section = typeof sections.$inferSelect;
+export type Subject = typeof subjects.$inferSelect;
+export type Student = typeof students.$inferSelect;
+export type NewStudent = typeof students.$inferInsert;
