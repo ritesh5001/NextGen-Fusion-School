@@ -97,18 +97,22 @@ export const getSystemHealth = createServerFn({ method: "GET" })
         const q = db
           .select({ n: sql<number>`count(*)::int` })
           .from(table as never);
-        if (hasTenant && tid) {
-          const r = await q.where(
-            eq((table as { tenantId: unknown }).tenantId as never, tid),
-          );
-          return r[0]?.n ?? 0;
-        }
-        const r = await q;
+        const r = (
+          hasTenant && tid
+            ? await q.where(
+                eq(
+                  (table as { tenantId: unknown }).tenantId as never,
+                  tid,
+                ),
+              )
+            : await q
+        ) as { n: number }[];
         return r[0]?.n ?? 0;
       } catch {
         return 0;
       }
     }
+
 
     return {
       db: { ok: dbOk, latencyMs: dbLatencyMs },
