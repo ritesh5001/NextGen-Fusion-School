@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as SchoolSlugRouteImport } from './routes/school.$slug'
 import { Route as AuthResetRouteImport } from './routes/auth.reset'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
 import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
+import { Route as AppWebsiteRouteImport } from './routes/app.website'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTeachersRouteImport } from './routes/app.teachers'
 import { Route as AppSubjectsRouteImport } from './routes/app.subjects'
@@ -58,6 +60,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const SchoolSlugRoute = SchoolSlugRouteImport.update({
+  id: '/school/$slug',
+  path: '/school/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthResetRoute = AuthResetRouteImport.update({
   id: '/auth/reset',
   path: '/auth/reset',
@@ -77,6 +84,11 @@ const ApplySlugRoute = ApplySlugRouteImport.update({
   id: '/apply/$slug',
   path: '/apply/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppWebsiteRoute = AppWebsiteRouteImport.update({
+  id: '/website',
+  path: '/website',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppTenantsRoute = AppTenantsRouteImport.update({
   id: '/tenants',
@@ -238,10 +250,12 @@ export interface FileRoutesByFullPath {
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
+  '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
 }
@@ -272,10 +286,12 @@ export interface FileRoutesByTo {
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
+  '/school/$slug': typeof SchoolSlugRoute
   '/app': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
 }
@@ -308,10 +324,12 @@ export interface FileRoutesById {
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
+  '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
 }
@@ -345,10 +363,12 @@ export interface FileRouteTypes {
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/app/website'
     | '/apply/$slug'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
+    | '/school/$slug'
     | '/app/'
     | '/marksheet/$examId/$studentId'
   fileRoutesByTo: FileRoutesByTo
@@ -379,10 +399,12 @@ export interface FileRouteTypes {
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/app/website'
     | '/apply/$slug'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
+    | '/school/$slug'
     | '/app'
     | '/marksheet/$examId/$studentId'
   id:
@@ -414,10 +436,12 @@ export interface FileRouteTypes {
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/app/website'
     | '/apply/$slug'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
+    | '/school/$slug'
     | '/app/'
     | '/marksheet/$examId/$studentId'
   fileRoutesById: FileRoutesById
@@ -429,6 +453,7 @@ export interface RootRouteChildren {
   AuthForgotRoute: typeof AuthForgotRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetRoute: typeof AuthResetRoute
+  SchoolSlugRoute: typeof SchoolSlugRoute
   MarksheetExamIdStudentIdRoute: typeof MarksheetExamIdStudentIdRoute
 }
 
@@ -454,6 +479,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/school/$slug': {
+      id: '/school/$slug'
+      path: '/school/$slug'
+      fullPath: '/school/$slug'
+      preLoaderRoute: typeof SchoolSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/reset': {
       id: '/auth/reset'
@@ -482,6 +514,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/apply/$slug'
       preLoaderRoute: typeof ApplySlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/website': {
+      id: '/app/website'
+      path: '/website'
+      fullPath: '/app/website'
+      preLoaderRoute: typeof AppWebsiteRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/tenants': {
       id: '/app/tenants'
@@ -694,6 +733,7 @@ interface AppRouteChildren {
   AppSubjectsRoute: typeof AppSubjectsRoute
   AppTeachersRoute: typeof AppTeachersRoute
   AppTenantsRoute: typeof AppTenantsRoute
+  AppWebsiteRoute: typeof AppWebsiteRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -723,6 +763,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSubjectsRoute: AppSubjectsRoute,
   AppTeachersRoute: AppTeachersRoute,
   AppTenantsRoute: AppTenantsRoute,
+  AppWebsiteRoute: AppWebsiteRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -735,6 +776,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthForgotRoute: AuthForgotRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetRoute: AuthResetRoute,
+  SchoolSlugRoute: SchoolSlugRoute,
   MarksheetExamIdStudentIdRoute: MarksheetExamIdStudentIdRoute,
 }
 export const routeTree = rootRouteImport
