@@ -49,6 +49,8 @@ const nav: NavGroup[] = [
   {
     label: "Academic",
     items: [
+      { to: "/app/academic-years", label: "Academic Years", icon: Calendar },
+      { to: "/app/classes", label: "Classes & Sections", icon: BookOpen },
       { to: "/app/attendance", label: "Attendance", icon: CalendarCheck },
       { to: "/app/exams", label: "Exams & Marks", icon: FileSpreadsheet },
       { to: "/app/library", label: "Library", icon: BookOpen },
@@ -75,11 +77,17 @@ const nav: NavGroup[] = [
   {
     label: "Institute",
     items: [
+      { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
+
+const superAdminNav: NavGroup = {
+  label: "Platform",
+  items: [{ to: "/app/tenants", label: "Schools (Tenants)", icon: Landmark }],
+};
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
