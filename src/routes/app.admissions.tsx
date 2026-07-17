@@ -103,7 +103,7 @@ function AdmissionsPage() {
     refresh();
     listS({}).then((s) => setSections(s as Sec[]));
     const session = getSession();
-    if (session?.tenant?.slug) setTenantSlug(session.tenant.slug);
+    if (session?.user.tenant?.slug) setTenantSlug(session.user.tenant.slug);
   }, []);
   useEffect(() => {
     refresh();
