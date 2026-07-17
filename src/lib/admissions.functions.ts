@@ -248,7 +248,7 @@ export const enrollApplication = createServerFn({ method: "POST" })
         firstName: app.firstName,
         lastName: app.lastName,
         gender: app.gender,
-        dob: app.dob,
+        dob: app.dob ? new Date(app.dob) : null,
         guardianName: app.guardianName,
         guardianPhone: app.guardianPhone,
         guardianEmail: app.guardianEmail,
