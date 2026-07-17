@@ -22,7 +22,9 @@ import { Route as AppStudentsRouteImport } from './routes/app.students'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppPromotionRouteImport } from './routes/app.promotion'
+import { Route as AppPayrollRouteImport } from './routes/app.payroll'
 import { Route as AppMarksRouteImport } from './routes/app.marks'
+import { Route as AppHrmRouteImport } from './routes/app.hrm'
 import { Route as AppGradesRouteImport } from './routes/app.grades'
 import { Route as AppFeesRouteImport } from './routes/app.fees'
 import { Route as AppExamsRouteImport } from './routes/app.exams'
@@ -97,9 +99,19 @@ const AppPromotionRoute = AppPromotionRouteImport.update({
   path: '/promotion',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPayrollRoute = AppPayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMarksRoute = AppMarksRouteImport.update({
   id: '/marks',
   path: '/marks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHrmRoute = AppHrmRouteImport.update({
+  id: '/hrm',
+  path: '/hrm',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGradesRoute = AppGradesRouteImport.update({
@@ -154,7 +166,9 @@ export interface FileRoutesByFullPath {
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/hrm': typeof AppHrmRoute
   '/app/marks': typeof AppMarksRoute
+  '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
@@ -177,7 +191,9 @@ export interface FileRoutesByTo {
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/hrm': typeof AppHrmRoute
   '/app/marks': typeof AppMarksRoute
+  '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
@@ -202,7 +218,9 @@ export interface FileRoutesById {
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
+  '/app/hrm': typeof AppHrmRoute
   '/app/marks': typeof AppMarksRoute
+  '/app/payroll': typeof AppPayrollRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
@@ -228,7 +246,9 @@ export interface FileRouteTypes {
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
+    | '/app/hrm'
     | '/app/marks'
+    | '/app/payroll'
     | '/app/promotion'
     | '/app/roles'
     | '/app/settings'
@@ -251,7 +271,9 @@ export interface FileRouteTypes {
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
+    | '/app/hrm'
     | '/app/marks'
+    | '/app/payroll'
     | '/app/promotion'
     | '/app/roles'
     | '/app/settings'
@@ -275,7 +297,9 @@ export interface FileRouteTypes {
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
+    | '/app/hrm'
     | '/app/marks'
+    | '/app/payroll'
     | '/app/promotion'
     | '/app/roles'
     | '/app/settings'
@@ -392,11 +416,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPromotionRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/payroll': {
+      id: '/app/payroll'
+      path: '/payroll'
+      fullPath: '/app/payroll'
+      preLoaderRoute: typeof AppPayrollRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/marks': {
       id: '/app/marks'
       path: '/marks'
       fullPath: '/app/marks'
       preLoaderRoute: typeof AppMarksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/hrm': {
+      id: '/app/hrm'
+      path: '/hrm'
+      fullPath: '/app/hrm'
+      preLoaderRoute: typeof AppHrmRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/grades': {
@@ -466,7 +504,9 @@ interface AppRouteChildren {
   AppExamsRoute: typeof AppExamsRoute
   AppFeesRoute: typeof AppFeesRoute
   AppGradesRoute: typeof AppGradesRoute
+  AppHrmRoute: typeof AppHrmRoute
   AppMarksRoute: typeof AppMarksRoute
+  AppPayrollRoute: typeof AppPayrollRoute
   AppPromotionRoute: typeof AppPromotionRoute
   AppRolesRoute: typeof AppRolesRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -485,7 +525,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppExamsRoute: AppExamsRoute,
   AppFeesRoute: AppFeesRoute,
   AppGradesRoute: AppGradesRoute,
+  AppHrmRoute: AppHrmRoute,
   AppMarksRoute: AppMarksRoute,
+  AppPayrollRoute: AppPayrollRoute,
   AppPromotionRoute: AppPromotionRoute,
   AppRolesRoute: AppRolesRoute,
   AppSettingsRoute: AppSettingsRoute,
