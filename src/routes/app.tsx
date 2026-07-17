@@ -1,4 +1,5 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -19,8 +20,11 @@ import {
   Settings,
   Search,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getSession, setSession, subscribeSession, type SessionUser } from "@/lib/session";
+import { logout as logoutFn } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
