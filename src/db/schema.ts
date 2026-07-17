@@ -1824,6 +1824,36 @@ export type SiteTimelineItem = typeof siteTimeline.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 
+/* ============================================================
+ * Phase 10 — System logs (audit / activity trail)
+ * ============================================================ */
+export const systemLogs = pgTable(
+  "system_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id").references(() => tenants.id, {
+      onDelete: "cascade",
+    }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    level: text("level").notNull().default("info"), // info | warn | error
+    category: text("category").notNull().default("system"),
+    message: text("message").notNull(),
+    metadata: text("metadata"), // JSON string
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("system_logs_tenant_idx").on(t.tenantId),
+    index("system_logs_created_idx").on(t.createdAt),
+    index("system_logs_level_idx").on(t.level),
+  ],
+);
+
+export type SystemLog = typeof systemLogs.$inferSelect;
+
+
 
 
 
