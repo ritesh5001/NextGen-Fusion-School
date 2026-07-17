@@ -136,7 +136,7 @@ function CalendarPage() {
       <PageHeader
         title="Academic Calendar"
         description="Holidays, exams, events, and meetings"
-        actions={
+        action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => window.print()}>
               <Printer className="w-4 h-4 mr-2" />

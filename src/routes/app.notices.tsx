@@ -41,7 +41,7 @@ type Notice = {
   publishTo: string | null;
   isPinned: boolean;
   isPublished: boolean;
-  createdAt: string;
+  createdAt: string | Date;
 };
 
 function NoticesPage() {
@@ -90,7 +90,7 @@ function NoticesPage() {
       <PageHeader
         title="Notice Board"
         description="Publish announcements to students, staff, and parents"
-        actions={
+        action={
           <Button
             onClick={() => {
               setEdit({ audience: "all", isPinned: false, isPublished: true });
