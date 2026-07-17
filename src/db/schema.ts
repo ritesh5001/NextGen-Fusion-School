@@ -457,10 +457,25 @@ export const instituteSettings = pgTable("institute_settings", {
   timezone: text("timezone").notNull().default("Asia/Kolkata"),
   currency: text("currency").notNull().default("INR"),
   currencySymbol: text("currency_symbol").notNull().default("₹"),
+  // SMTP / email (Phase 10)
+  smtpHost: text("smtp_host"),
+  smtpPort: integer("smtp_port"),
+  smtpUsername: text("smtp_username"),
+  smtpPassword: text("smtp_password"),
+  smtpFromEmail: text("smtp_from_email"),
+  smtpFromName: text("smtp_from_name"),
+  smtpSecure: boolean("smtp_secure").notNull().default(true),
+  // Report settings (Phase 10)
+  reportHeader: text("report_header"),
+  reportFooter: text("report_footer"),
+  reportLogoUrl: text("report_logo_url"),
+  reportSignatureUrl: text("report_signature_url"),
+  reportPrincipalName: text("report_principal_name"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
+
 
 /* ============================================================
  * Teachers — profile record for teaching staff (Phase 3)
