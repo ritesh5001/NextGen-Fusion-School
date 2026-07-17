@@ -37,6 +37,7 @@ import { Route as AppHostelRouteImport } from './routes/app.hostel'
 import { Route as AppGradesRouteImport } from './routes/app.grades'
 import { Route as AppFeesRouteImport } from './routes/app.fees'
 import { Route as AppExamsRouteImport } from './routes/app.exams'
+import { Route as AppDevopsRouteImport } from './routes/app.devops'
 import { Route as AppClassesRouteImport } from './routes/app.classes'
 import { Route as AppCalendarRouteImport } from './routes/app.calendar'
 import { Route as AppAttendanceRouteImport } from './routes/app.attendance'
@@ -185,6 +186,11 @@ const AppExamsRoute = AppExamsRouteImport.update({
   path: '/exams',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDevopsRoute = AppDevopsRouteImport.update({
+  id: '/devops',
+  path: '/devops',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppClassesRoute = AppClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
@@ -231,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
+  '/app/devops': typeof AppDevopsRoute
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
+  '/app/devops': typeof AppDevopsRoute
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
   '/app/classes': typeof AppClassesRoute
+  '/app/devops': typeof AppDevopsRoute
   '/app/exams': typeof AppExamsRoute
   '/app/fees': typeof AppFeesRoute
   '/app/grades': typeof AppGradesRoute
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
     | '/app/attendance'
     | '/app/calendar'
     | '/app/classes'
+    | '/app/devops'
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/app/attendance'
     | '/app/calendar'
     | '/app/classes'
+    | '/app/devops'
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '/app/attendance'
     | '/app/calendar'
     | '/app/classes'
+    | '/app/devops'
     | '/app/exams'
     | '/app/fees'
     | '/app/grades'
@@ -655,6 +667,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExamsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/devops': {
+      id: '/app/devops'
+      path: '/devops'
+      fullPath: '/app/devops'
+      preLoaderRoute: typeof AppDevopsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/classes': {
       id: '/app/classes'
       path: '/classes'
@@ -714,6 +733,7 @@ interface AppRouteChildren {
   AppAttendanceRoute: typeof AppAttendanceRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppClassesRoute: typeof AppClassesRoute
+  AppDevopsRoute: typeof AppDevopsRoute
   AppExamsRoute: typeof AppExamsRoute
   AppFeesRoute: typeof AppFeesRoute
   AppGradesRoute: typeof AppGradesRoute
@@ -744,6 +764,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAttendanceRoute: AppAttendanceRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppClassesRoute: AppClassesRoute,
+  AppDevopsRoute: AppDevopsRoute,
   AppExamsRoute: AppExamsRoute,
   AppFeesRoute: AppFeesRoute,
   AppGradesRoute: AppGradesRoute,
