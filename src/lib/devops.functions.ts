@@ -20,15 +20,16 @@ async function requireAdmin(context: {
   const { userRoles, roles } = await import("@/db/schema");
   const db = getDb();
   const rows = await db
-    .select({ slug: roles.slug })
+    .select({ key: roles.key })
     .from(userRoles)
     .innerJoin(roles, eq(roles.id, userRoles.roleId))
     .where(eq(userRoles.userId, context.userId));
-  const slugs = rows.map((r) => r.slug);
-  if (!slugs.some((s) => s === "superadmin" || s === "admin"))
+  const keys = rows.map((r) => r.key);
+  if (!keys.some((s) => s === "superadmin" || s === "admin"))
     throw new Response("Forbidden", { status: 403 });
-  return { slugs };
+  return { keys };
 }
+
 
 /* -------- Log helper (server-only, callable from other server fns) -------- */
 export async function writeLog(args: {
