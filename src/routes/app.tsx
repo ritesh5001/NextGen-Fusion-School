@@ -77,6 +77,7 @@ const nav: NavGroup[] = [
       { to: "/app/id-cards", label: "ID Cards", icon: IdCard },
       { to: "/app/calendar", label: "Calendar", icon: Calendar },
       { to: "/app/notices", label: "Notice Board", icon: Megaphone },
+      { to: "/app/admissions", label: "Online Admissions", icon: ClipboardList },
       { to: "/app/reports", label: "Reports", icon: ClipboardList },
       { to: "/app/notifications", label: "Notifications", icon: Bell },
     ],
