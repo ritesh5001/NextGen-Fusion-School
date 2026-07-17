@@ -90,8 +90,10 @@ const nav: NavGroup[] = [
       { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
       { to: "/app/settings", label: "Settings", icon: Settings },
+      { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
     ],
   },
+
 ];
 
 const superAdminNav: NavGroup = {
