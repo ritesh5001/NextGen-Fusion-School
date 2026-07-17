@@ -83,6 +83,42 @@ const nav: NavGroup[] = [
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const nav = useNavigate();
+  const [user, setUser] = useState<SessionUser | null>(() => getSession()?.user ?? null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const s = getSession();
+    setUser(s?.user ?? null);
+    setReady(true);
+    if (!s) {
+      nav({ to: "/auth/login", search: { redirect: window.location.pathname } });
+    }
+    return subscribeSession((next) => setUser(next?.user ?? null));
+  }, [nav]);
+
+  async function handleLogout() {
+    const s = getSession();
+    try {
+      if (s?.refreshToken) await logoutFn({ data: { refreshToken: s.refreshToken } });
+    } catch {
+      /* ignore */
+    }
+    setSession(null);
+    nav({ to: "/auth/login" });
+  }
+
+  if (!ready || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+
+  const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+  const roleLabel = user.isSuperAdmin ? "Super admin" : user.tenant?.name ?? "Member";
+  const schoolName = user.tenant?.name ?? "Platform";
 
   return (
     <div className="flex min-h-screen w-full bg-surface-muted">
