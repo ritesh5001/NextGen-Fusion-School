@@ -763,3 +763,248 @@ export type ClassSubjectTeacher = typeof classSubjectTeachers.$inferSelect;
 export type StudentAttendance = typeof studentAttendance.$inferSelect;
 export type EmployeeAttendance = typeof employeeAttendance.$inferSelect;
 
+
+/* ============================================================
+ * Phase 5 — Fees, Accounts, Promotion
+ * ============================================================ */
+export const feeInvoiceStatus = pgEnum("fee_invoice_status", [
+  "unpaid",
+  "partial",
+  "paid",
+  "cancelled",
+]);
+export const accountKind = pgEnum("account_kind", ["income", "expense"]);
+export const paymentMethod = pgEnum("payment_method", [
+  "cash",
+  "bank",
+  "upi",
+  "card",
+  "cheque",
+  "online",
+  "other",
+]);
+
+export const feeHeads = pgTable(
+  "fee_heads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: text("code"),
+    description: text("description"),
+    isRecurring: boolean("is_recurring").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("fee_heads_tenant_idx").on(t.tenantId),
+    uniqueIndex("fee_heads_tenant_name_uniq").on(t.tenantId, t.name),
+  ],
+);
+
+export const feeStructures = pgTable(
+  "fee_structures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    feeHeadId: uuid("fee_head_id")
+      .notNull()
+      .references(() => feeHeads.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    term: text("term"),
+    dueDay: integer("due_day"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("fee_struct_tenant_idx").on(t.tenantId),
+    index("fee_struct_class_idx").on(t.classId),
+    index("fee_struct_year_idx").on(t.academicYearId),
+  ],
+);
+
+export const feeInvoices = pgTable(
+  "fee_invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    invoiceNo: text("invoice_no").notNull(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    academicYearId: uuid("academic_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
+    issueDate: text("issue_date").notNull(),
+    dueDate: text("due_date").notNull(),
+    totalAmount: integer("total_amount").notNull().default(0),
+    paidAmount: integer("paid_amount").notNull().default(0),
+    status: feeInvoiceStatus("status").notNull().default("unpaid"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("fee_inv_no_uniq").on(t.tenantId, t.invoiceNo),
+    index("fee_inv_tenant_idx").on(t.tenantId),
+    index("fee_inv_student_idx").on(t.studentId),
+    index("fee_inv_status_idx").on(t.status),
+  ],
+);
+
+export const feeInvoiceItems = pgTable(
+  "fee_invoice_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => feeInvoices.id, { onDelete: "cascade" }),
+    feeHeadId: uuid("fee_head_id").references(() => feeHeads.id, {
+      onDelete: "set null",
+    }),
+    description: text("description").notNull(),
+    amount: integer("amount").notNull(),
+  },
+  (t) => [index("fee_inv_item_invoice_idx").on(t.invoiceId)],
+);
+
+export const feePayments = pgTable(
+  "fee_payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => feeInvoices.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    method: paymentMethod("method").notNull().default("cash"),
+    reference: text("reference"),
+    paidOn: text("paid_on").notNull(),
+    remarks: text("remarks"),
+    isCancelled: boolean("is_cancelled").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("fee_pay_invoice_idx").on(t.invoiceId),
+    index("fee_pay_tenant_idx").on(t.tenantId),
+  ],
+);
+
+export const accountHeads = pgTable(
+  "account_heads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: accountKind("kind").notNull(),
+    description: text("description"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("acc_heads_uniq").on(t.tenantId, t.name),
+    index("acc_heads_tenant_idx").on(t.tenantId),
+  ],
+);
+
+export const accountTransactions = pgTable(
+  "account_transactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    accountHeadId: uuid("account_head_id")
+      .notNull()
+      .references(() => accountHeads.id, { onDelete: "restrict" }),
+    kind: accountKind("kind").notNull(),
+    txDate: text("tx_date").notNull(),
+    amount: integer("amount").notNull(),
+    description: text("description"),
+    reference: text("reference"),
+    feePaymentId: uuid("fee_payment_id").references(() => feePayments.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("acc_tx_tenant_idx").on(t.tenantId),
+    index("acc_tx_head_idx").on(t.accountHeadId),
+    index("acc_tx_date_idx").on(t.txDate),
+  ],
+);
+
+export const promotionLogs = pgTable(
+  "promotion_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    fromYearId: uuid("from_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
+    toYearId: uuid("to_year_id").references(() => academicYears.id, {
+      onDelete: "set null",
+    }),
+    fromClassId: uuid("from_class_id"),
+    fromSectionId: uuid("from_section_id"),
+    toClassId: uuid("to_class_id"),
+    toSectionId: uuid("to_section_id"),
+    outcome: text("outcome").notNull(),
+    performedBy: uuid("performed_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("promo_tenant_idx").on(t.tenantId),
+    index("promo_student_idx").on(t.studentId),
+  ],
+);
+
+export type FeeHead = typeof feeHeads.$inferSelect;
+export type FeeStructure = typeof feeStructures.$inferSelect;
+export type FeeInvoice = typeof feeInvoices.$inferSelect;
+export type FeeInvoiceItem = typeof feeInvoiceItems.$inferSelect;
+export type FeePayment = typeof feePayments.$inferSelect;
+export type AccountHead = typeof accountHeads.$inferSelect;
+export type AccountTransaction = typeof accountTransactions.$inferSelect;
+export type PromotionLog = typeof promotionLogs.$inferSelect;
