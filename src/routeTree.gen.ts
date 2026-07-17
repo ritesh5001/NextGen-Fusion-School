@@ -15,6 +15,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AuthResetRouteImport } from './routes/auth.reset'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
+import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -46,10 +47,16 @@ const AuthForgotRoute = AuthForgotRouteImport.update({
   path: '/auth/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTenantsRoute = AppTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/tenants': typeof AppTenantsRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/tenants': typeof AppTenantsRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
@@ -66,6 +74,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/tenants': typeof AppTenantsRoute
   '/auth/forgot': typeof AuthForgotRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
@@ -76,16 +85,24 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/app/tenants'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/forgot' | '/auth/login' | '/auth/reset' | '/app'
+  to:
+    | '/'
+    | '/app/tenants'
+    | '/auth/forgot'
+    | '/auth/login'
+    | '/auth/reset'
+    | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/app/tenants'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/reset'
@@ -144,14 +161,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/tenants': {
+      id: '/app/tenants'
+      path: '/tenants'
+      fullPath: '/app/tenants'
+      preLoaderRoute: typeof AppTenantsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppTenantsRoute: typeof AppTenantsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppTenantsRoute: AppTenantsRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
