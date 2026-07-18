@@ -177,9 +177,24 @@ function Home() {
       </section>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} {name}. All rights reserved.</span>
-          <Link to="/auth/login" className="hover:text-foreground">Staff sign in</Link>
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 sm:flex-row">
+          <span className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} {name}. All rights reserved.
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Developed by{" "}
+            <a
+              href="https://nextgenfusion.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              NextGen Fusion
+            </a>
+          </span>
+          <Link to="/auth/login" className="text-xs text-muted-foreground hover:text-foreground">
+            Staff sign in
+          </Link>
         </div>
       </footer>
     </div>
