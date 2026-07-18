@@ -1,8 +1,12 @@
-# NextGen Fusion School — School Management SaaS
+# NextGen Fusion School — School Management ERP
 
-Multi-tenant school management system. Built on TanStack Start (React 19 + Vite),
-Drizzle ORM, PostgreSQL, and a custom JWT auth layer. Portable — no Supabase,
-no vendor lock. Deploy anywhere Node runs.
+A complete school management system developed by [NextGen Fusion](https://nextgenfusion.in).
+Built on TanStack Start (React 19 + Vite), Drizzle ORM, PostgreSQL, and a custom
+JWT auth layer. Portable — no Supabase, no vendor lock. Deploy anywhere Node runs.
+
+> **License:** This is proprietary commercial software. See [LICENSE](./LICENSE)
+> for full terms. For licensing, deployment, or support inquiries, visit
+> [nextgenfusion.in](https://nextgenfusion.in).
 
 ## Phase 0 — UI shell ✅
 

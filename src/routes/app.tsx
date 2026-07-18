@@ -268,6 +268,24 @@ function AppLayout() {
             </div>
           )}
           <Outlet />
+          <footer className="border-t border-border bg-background px-8 py-3">
+            <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
+              <span>
+                © {new Date().getFullYear()} {schoolName}. Licensed to NextGen Fusion School.
+              </span>
+              <span>
+                Developed by{" "}
+                <a
+                  href="https://nextgenfusion.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:underline"
+                >
+                  NextGen Fusion
+                </a>
+              </span>
+            </div>
+          </footer>
         </main>
       </div>
     </div>
