@@ -22,6 +22,7 @@ import {
   ChevronDown,
   LogOut,
   Wrench,
+  Lock,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -87,9 +88,11 @@ const nav: NavGroup[] = [
   {
     label: "Institute",
     items: [
+      { to: "/app/users", label: "Users & Access", icon: Users },
       { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
       { to: "/app/settings", label: "Settings", icon: Settings },
+      { to: "/app/profile", label: "My Profile", icon: UserCog },
       { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
     ],
   },
@@ -198,6 +201,13 @@ function AppLayout() {
               <div className="truncate text-xs font-semibold">{displayName}</div>
               <div className="truncate text-[10px] text-sidebar-muted">{roleLabel}</div>
             </div>
+            <button
+              onClick={() => navigate({ to: "/auth/lock" })}
+              title="Lock screen"
+              className="rounded-md p-1.5 text-sidebar-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <Lock className="size-4" />
+            </button>
             <button
               onClick={handleLogout}
               title="Sign out"
