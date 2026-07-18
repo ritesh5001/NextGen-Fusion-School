@@ -1,21 +1,43 @@
+# NextGen Fusion School — Deployment (single-institution)
+# Deploy per school on the school's own server. One deployment = one institution.
+
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: sms_postgres
     restart: unless-stopped
+    environment:
+      POSTGRES_USER: nextgen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: nextgen
+    volumes:
+      - db-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_USER: sms
-      POSTGRES_PASSWORD: sms
-      POSTGRES_DB: sms
-    volumes:
-      - sms_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sms -d sms"]
+      test: ["CMD-SHELL", "pg_isready -U nextgen"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://nextgen:${POSTGRES_PASSWORD:-changeme}@db:5432/nextgen
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      LICENSE_PUBLIC_KEY: ${LICENSE_PUBLIC_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      NODE_ENV: production
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
+
 volumes:
-  sms_pgdata:
+  db-data:
+  uploads:
