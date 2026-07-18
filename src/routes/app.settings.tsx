@@ -8,6 +8,7 @@ import {
   saveSmtpSettings,
   saveReportSettings,
 } from "@/lib/settings.functions";
+import { getLicenseStatus, setLicenseKey } from "@/lib/license.functions";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,7 +93,12 @@ function SettingsPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="email">Email / SMTP</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="license">License</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="license" className="mt-6">
+          <LicensePanel />
+        </TabsContent>
 
         {/* ------------- GENERAL ------------- */}
         <TabsContent value="general" className="mt-6">
@@ -444,5 +450,109 @@ function ReportForm({
         </div>
       </Card>
     </form>
+  );
+}
+
+function LicensePanel() {
+  const getStatus = useServerFn(getLicenseStatus);
+  const activate = useServerFn(setLicenseKey);
+  const [state, setState] = useState<Awaited<ReturnType<typeof getStatus>> | null>(null);
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function reload() {
+    try {
+      setState(await getStatus());
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function activateNow(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await activate({ data: { licenseKey: key.trim() } });
+      toast.success("License activated");
+      setKey("");
+      await reload();
+    } catch (err) {
+      const msg = err instanceof Response ? await err.text() : (err as Error).message;
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const st = state?.status;
+  const p = st?.payload;
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <Card className="p-6 lg:col-span-2">
+        <h2 className="mb-1 font-display text-lg font-semibold">Deployment license</h2>
+        <p className="mb-5 text-sm text-muted-foreground">
+          Paste the license key issued for this school. The key is verified offline against the
+          vendor's public key configured in the server environment.
+        </p>
+        <form onSubmit={activateNow} className="space-y-3">
+          <Label htmlFor="lk">License key</Label>
+          <Textarea
+            id="lk"
+            rows={4}
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            placeholder="eyJpbnN0aXR1dGlvbiI6...."
+            className="font-mono text-xs"
+          />
+          <Button type="submit" disabled={busy || !key.trim()}>
+            {busy ? "Verifying…" : "Activate license"}
+          </Button>
+        </form>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="mb-4 font-display text-lg font-semibold">Current status</h2>
+        {!state ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : !state.hasKey ? (
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            No license key installed. The app runs with an unlicensed banner until a valid key is
+            activated.
+          </p>
+        ) : st?.valid ? (
+          <dl className="space-y-2 text-sm">
+            <Row label="Institution" value={p?.institution} />
+            <Row label="Issued" value={p?.issuedAt} />
+            <Row label="Expires" value={p?.expiresAt ?? "Perpetual"} />
+            <Row label="Max students" value={p?.maxStudents ? String(p.maxStudents) : "Unlimited"} />
+            <Row label="Features" value={(p?.features ?? []).join(", ") || "*"} />
+            {st.expiresInDays != null && (
+              <Row
+                label="Days remaining"
+                value={st.expiresInDays.toString()}
+              />
+            )}
+          </dl>
+        ) : (
+          <p className="text-sm text-destructive">
+            License invalid: {st?.reason ?? "unknown reason"}.
+          </p>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value?: string | number | null }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/60 pb-1 last:border-0">
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-medium">{value ?? "—"}</dd>
+    </div>
   );
 }

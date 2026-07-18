@@ -1,0 +1,28 @@
+# One-click deploy on Render (https://render.com).
+# Creates the web service; point DATABASE_URL at a Neon / Render / self-hosted
+# Postgres instance. First boot runs migrations automatically via the Dockerfile
+# CMD, then the setup wizard is available at /setup.
+
+services:
+  - type: web
+    name: nextgen-fusion-school
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/public/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: LICENSE_PUBLIC_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
