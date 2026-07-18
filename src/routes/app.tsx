@@ -23,6 +23,7 @@ import {
   LogOut,
   Wrench,
   Lock,
+  Palette,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -91,6 +92,7 @@ const nav: NavGroup[] = [
       { to: "/app/users", label: "Users & Access", icon: Users },
       { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
+      { to: "/app/appearance", label: "Appearance", icon: Palette },
       { to: "/app/settings", label: "Settings", icon: Settings },
       { to: "/app/profile", label: "My Profile", icon: UserCog },
       { to: "/app/devops", label: "Developer Utilities", icon: Wrench },

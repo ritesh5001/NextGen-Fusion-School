@@ -116,8 +116,28 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    // Load persisted session into memory on first client render.
-    import("../lib/session").then((m) => m.initSession());
+    // Load persisted session and per-tenant theme on first client render.
+    (async () => {
+      const sessionMod = await import("../lib/session");
+      sessionMod.initSession();
+      const themeMod = await import("../lib/theme-client");
+      const sess = sessionMod.getSession();
+      const slug = sess?.user.tenant?.slug;
+      if (slug) {
+        const cached = themeMod.readCachedTheme(slug);
+        if (cached) themeMod.applyTheme(cached);
+        // Refresh from server in background
+        try {
+          const { getMyTenantTheme } = await import("../lib/theme.functions");
+          const res = await getMyTenantTheme();
+          const fresh = themeMod.parseTheme(res.themeJson);
+          themeMod.applyTheme(fresh);
+          themeMod.cacheTheme(slug, fresh);
+        } catch {
+          /* ignore — cached theme (or defaults) stays applied */
+        }
+      }
+    })();
   }, []);
 
   return (
