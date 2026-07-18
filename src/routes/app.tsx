@@ -101,10 +101,8 @@ const nav: NavGroup[] = [
 
 ];
 
-const superAdminNav: NavGroup = {
-  label: "Platform",
-  items: [{ to: "/app/tenants", label: "Schools (Tenants)", icon: Landmark }],
-};
+// Single-institution deployment: no platform tenant switcher.
+
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -165,7 +163,7 @@ function AppLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
-          {(user.isSuperAdmin ? [superAdminNav, ...nav] : nav).map((group) => (
+          {nav.map((group) => (
             <div key={group.label} className="mb-4">
               <div className="mb-1 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-sidebar-muted">
                 {group.label}

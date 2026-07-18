@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,7 +22,6 @@ import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
 import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
 import { Route as AppWebsiteRouteImport } from './routes/app.website'
 import { Route as AppUsersRouteImport } from './routes/app.users'
-import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTeachersRouteImport } from './routes/app.teachers'
 import { Route as AppSubjectsRouteImport } from './routes/app.subjects'
 import { Route as AppStudentsRouteImport } from './routes/app.students'
@@ -53,6 +53,11 @@ import { Route as TeachersSlugTeacherIdRouteImport } from './routes/teachers.$sl
 import { Route as MarksheetExamIdStudentIdRouteImport } from './routes/marksheet.$examId.$studentId'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
   path: '/portal',
@@ -111,11 +116,6 @@ const AppWebsiteRoute = AppWebsiteRouteImport.update({
 const AppUsersRoute = AppUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTenantsRoute = AppTenantsRouteImport.update({
-  id: '/tenants',
-  path: '/tenants',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTeachersRoute = AppTeachersRouteImport.update({
@@ -274,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/portal': typeof PortalRoute
+  '/setup': typeof SetupRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -301,7 +302,6 @@ export interface FileRoutesByFullPath {
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
-  '/app/tenants': typeof AppTenantsRoute
   '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
@@ -318,6 +318,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/portal': typeof PortalRoute
+  '/setup': typeof SetupRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -345,7 +346,6 @@ export interface FileRoutesByTo {
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
-  '/app/tenants': typeof AppTenantsRoute
   '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
@@ -364,6 +364,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/portal': typeof PortalRoute
+  '/setup': typeof SetupRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -391,7 +392,6 @@ export interface FileRoutesById {
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
-  '/app/tenants': typeof AppTenantsRoute
   '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
@@ -411,6 +411,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/portal'
+    | '/setup'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -438,7 +439,6 @@ export interface FileRouteTypes {
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
-    | '/app/tenants'
     | '/app/users'
     | '/app/website'
     | '/apply/$slug'
@@ -455,6 +455,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/portal'
+    | '/setup'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -482,7 +483,6 @@ export interface FileRouteTypes {
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
-    | '/app/tenants'
     | '/app/users'
     | '/app/website'
     | '/apply/$slug'
@@ -500,6 +500,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/portal'
+    | '/setup'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -527,7 +528,6 @@ export interface FileRouteTypes {
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
-    | '/app/tenants'
     | '/app/users'
     | '/app/website'
     | '/apply/$slug'
@@ -546,6 +546,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   PortalRoute: typeof PortalRoute
+  SetupRoute: typeof SetupRoute
   ApplySlugRoute: typeof ApplySlugRoute
   AuthForgotRoute: typeof AuthForgotRoute
   AuthLockRoute: typeof AuthLockRoute
@@ -559,6 +560,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal': {
       id: '/portal'
       path: '/portal'
@@ -641,13 +649,6 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/app/users'
       preLoaderRoute: typeof AppUsersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/tenants': {
-      id: '/app/tenants'
-      path: '/tenants'
-      fullPath: '/app/tenants'
-      preLoaderRoute: typeof AppTenantsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/teachers': {
@@ -891,7 +892,6 @@ interface AppRouteChildren {
   AppStudentsRoute: typeof AppStudentsRoute
   AppSubjectsRoute: typeof AppSubjectsRoute
   AppTeachersRoute: typeof AppTeachersRoute
-  AppTenantsRoute: typeof AppTenantsRoute
   AppUsersRoute: typeof AppUsersRoute
   AppWebsiteRoute: typeof AppWebsiteRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -925,7 +925,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppStudentsRoute: AppStudentsRoute,
   AppSubjectsRoute: AppSubjectsRoute,
   AppTeachersRoute: AppTeachersRoute,
-  AppTenantsRoute: AppTenantsRoute,
   AppUsersRoute: AppUsersRoute,
   AppWebsiteRoute: AppWebsiteRoute,
   AppIndexRoute: AppIndexRoute,
@@ -937,6 +936,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   PortalRoute: PortalRoute,
+  SetupRoute: SetupRoute,
   ApplySlugRoute: ApplySlugRoute,
   AuthForgotRoute: AuthForgotRoute,
   AuthLockRoute: AuthLockRoute,

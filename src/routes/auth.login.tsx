@@ -1,18 +1,16 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { GraduationCap, Users, Briefcase, ShieldCheck } from "lucide-react";
 import { login } from "@/lib/auth.functions";
+import { getInstallStatus } from "@/lib/setup.functions";
 import { setSession, type SessionUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { applyTheme, cacheTheme, parseTheme } from "@/lib/theme-client";
-import { getTenantThemeBySlug } from "@/lib/theme.functions";
 
 const search = z.object({
   redirect: z.string().optional(),
-  tenant: z.string().optional(),
   as: z.enum(["admin", "teacher", "student", "staff"]).optional(),
 });
 
@@ -37,7 +35,6 @@ const PORTALS: { key: Portal; label: string; blurb: string; icon: typeof Users }
   { key: "staff", label: "Staff", blurb: "Librarian, hostel warden, support", icon: Briefcase },
 ];
 
-/** Decide where to land the user based on the roles the server returned. */
 function landingFor(user: SessionUser): "/portal" | "/app" {
   if (user.isSuperAdmin) return "/app";
   const rk = user.roleKeys ?? [];
@@ -49,42 +46,31 @@ function LoginPage() {
   const nav = useNavigate();
   const s = useSearch({ from: "/auth/login" });
   const [portal, setPortal] = useState<Portal>(s.as ?? "admin");
-  const [tenantSlug, setTenantSlug] = useState(s.tenant ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [superAdmin, setSuperAdmin] = useState(false);
+  const [institutionName, setInstitutionName] = useState<string>("");
 
-  async function previewTenantTheme(slug: string) {
-    if (!slug) return;
-    try {
-      const res = await getTenantThemeBySlug({ data: { slug } });
-      const t = parseTheme(res.themeJson);
-      applyTheme(t);
-      cacheTheme(slug, t);
-    } catch {
-      /* ignore */
-    }
-  }
+  useEffect(() => {
+    getInstallStatus()
+      .then((st) => {
+        if (!st.installed) {
+          nav({ to: "/setup" });
+        } else if (st.institution) {
+          setInstitutionName(st.institution.name);
+        }
+      })
+      .catch(() => {});
+  }, [nav]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await login({
-        data: {
-          email,
-          password,
-          tenantSlug: superAdmin ? undefined : tenantSlug || undefined,
-        },
-      });
+      const res = await login({ data: { email, password } });
       setSession(res);
-      // Apply the tenant's theme immediately so the next screen is on-brand.
-      if (res.user.tenant?.slug) {
-        await previewTenantTheme(res.user.tenant.slug);
-      }
       const fallback = landingFor(res.user);
       nav({ to: (s.redirect as "/app") ?? fallback });
     } catch (err) {
@@ -105,9 +91,10 @@ function LoginPage() {
         </div>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <h1 className="font-display text-2xl font-semibold tracking-tight">Sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Access your school's workspace.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {institutionName ? `Access ${institutionName}.` : "Access your workspace."}
+          </p>
 
-          {/* Portal picker — purely cosmetic hint; server accepts any role */}
           <div className="mt-6 grid grid-cols-2 gap-2">
             {PORTALS.map((p) => {
               const active = portal === p.key;
@@ -132,20 +119,6 @@ function LoginPage() {
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-            {!superAdmin && (
-              <div className="space-y-2">
-                <Label htmlFor="tenant">School slug</Label>
-                <Input
-                  id="tenant"
-                  placeholder="e.g. sunrise-academy"
-                  value={tenantSlug}
-                  onChange={(e) => setTenantSlug(e.target.value)}
-                  onBlur={() => previewTenantTheme(tenantSlug.trim())}
-                  required={!superAdmin}
-                  autoComplete="organization"
-                />
-              </div>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -160,10 +133,7 @@ function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link
-                  to="/auth/forgot"
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
+                <Link to="/auth/forgot" className="text-xs text-muted-foreground hover:text-foreground">
                   Forgot?
                 </Link>
               </div>
@@ -176,15 +146,6 @@ function LoginPage() {
                 autoComplete="current-password"
               />
             </div>
-
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={superAdmin}
-                onChange={(e) => setSuperAdmin(e.target.checked)}
-              />
-              Sign in as platform super admin
-            </label>
 
             {error && (
               <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">

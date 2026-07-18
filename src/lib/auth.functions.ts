@@ -54,6 +54,9 @@ export const login = createServerFn({ method: "POST" })
 
     const db = getDb();
 
+    // Single-institution mode: auto-resolve to the sole tenant if the caller
+    // didn't specify a slug. Falls back to super-admin (tenantId=NULL) if the
+    // email doesn't match under that tenant.
     let tenantId: string | null = null;
     if (data.tenantSlug) {
       const t = await db
@@ -63,9 +66,12 @@ export const login = createServerFn({ method: "POST" })
         .limit(1);
       if (!t[0]) throw new Response("Invalid credentials", { status: 401 });
       tenantId = t[0].id;
+    } else {
+      const allTenants = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      if (allTenants.length === 1) tenantId = allTenants[0].id;
     }
 
-    const row = await db
+    let row = await db
       .select()
       .from(users)
       .where(
@@ -75,6 +81,15 @@ export const login = createServerFn({ method: "POST" })
         ),
       )
       .limit(1);
+
+    // Fallback: try super-admin (tenantId NULL) if no match under the auto-resolved tenant.
+    if (!row[0] && tenantId && !data.tenantSlug) {
+      row = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.email, data.email.toLowerCase()), isNull(users.tenantId)))
+        .limit(1);
+    }
 
     const user = row[0];
     if (!user || !user.isActive) {
