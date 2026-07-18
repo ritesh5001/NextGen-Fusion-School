@@ -22,6 +22,7 @@ import {
   ChevronDown,
   LogOut,
   Wrench,
+  Lock,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
