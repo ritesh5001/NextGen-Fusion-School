@@ -62,7 +62,7 @@ export const getMyStudentProfile = createServerFn({ method: "GET" })
       .from(studentAttendance)
       .where(eq(studentAttendance.studentId, student.id))
       .groupBy(studentAttendance.status);
-    const attendance = { present: 0, absent: 0, late: 0, leave: 0, total: 0 };
+    const attendance = { present: 0, absent: 0, late: 0, excused: 0, total: 0 };
     for (const r of attRows) {
       const s = r.status as keyof typeof attendance;
       if (s in attendance) attendance[s] = r.c;
