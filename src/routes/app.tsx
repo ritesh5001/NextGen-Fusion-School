@@ -29,6 +29,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getSession, setSession, subscribeSession, type SessionUser } from "@/lib/session";
 import { logout as logoutFn } from "@/lib/auth.functions";
+import { getLicenseStatus } from "@/lib/license.functions";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -109,6 +110,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState<SessionUser | null>(() => getSession()?.user ?? null);
   const [ready, setReady] = useState(false);
+  const [license, setLicense] = useState<{ label: string; tone: "warn" | "error" } | null>(null);
 
   useEffect(() => {
     const s = getSession();
@@ -116,9 +118,23 @@ function AppLayout() {
     setReady(true);
     if (!s) {
       navigate({ to: "/auth/login", search: { redirect: window.location.pathname } });
+      return;
     }
+    getLicenseStatus()
+      .then((r) => {
+        if (!r.installed) return;
+        const st = r.status;
+        if (!r.hasKey) {
+          setLicense({ label: "No license key installed — activate under Settings → License.", tone: "warn" });
+        } else if (!st?.valid) {
+          setLicense({ label: `License invalid: ${st?.reason ?? "unknown"} — data is read-only until renewed.`, tone: "error" });
+        } else if (st.expiresInDays != null && st.expiresInDays <= 30) {
+          setLicense({ label: `License / AMC expires in ${st.expiresInDays} day${st.expiresInDays === 1 ? "" : "s"}. Renew soon.`, tone: "warn" });
+        }
+      })
+      .catch(() => {});
     return subscribeSession((next) => setUser(next?.user ?? null));
-  }, [nav]);
+  }, [navigate]);
 
   async function handleLogout() {
     const s = getSession();
@@ -240,6 +256,17 @@ function AppLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
+          {license && (
+            <div
+              className={`border-b px-8 py-2 text-xs font-medium ${
+                license.tone === "error"
+                  ? "border-destructive/30 bg-destructive/10 text-destructive"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
+              }`}
+            >
+              {license.label}
+            </div>
+          )}
           <Outlet />
         </main>
       </div>
