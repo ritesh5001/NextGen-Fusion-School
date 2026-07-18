@@ -51,6 +51,7 @@ import { Route as AppAccountsRouteImport } from './routes/app.accounts'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
 import { Route as TeachersSlugTeacherIdRouteImport } from './routes/teachers.$slug.$teacherId'
 import { Route as MarksheetExamIdStudentIdRouteImport } from './routes/marksheet.$examId.$studentId'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 
 const PortalRoute = PortalRouteImport.update({
   id: '/portal',
@@ -263,6 +264,11 @@ const MarksheetExamIdStudentIdRoute =
     path: '/marksheet/$examId/$studentId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -305,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset': typeof AuthResetRoute
   '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
   '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
@@ -348,6 +355,7 @@ export interface FileRoutesByTo {
   '/auth/reset': typeof AuthResetRoute
   '/school/$slug': typeof SchoolSlugRoute
   '/app': typeof AppIndexRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
   '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/auth/reset': typeof AuthResetRoute
   '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
   '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
@@ -439,6 +448,7 @@ export interface FileRouteTypes {
     | '/auth/reset'
     | '/school/$slug'
     | '/app/'
+    | '/api/public/health'
     | '/marksheet/$examId/$studentId'
     | '/teachers/$slug/$teacherId'
   fileRoutesByTo: FileRoutesByTo
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/auth/reset'
     | '/school/$slug'
     | '/app'
+    | '/api/public/health'
     | '/marksheet/$examId/$studentId'
     | '/teachers/$slug/$teacherId'
   id:
@@ -526,6 +537,7 @@ export interface FileRouteTypes {
     | '/auth/reset'
     | '/school/$slug'
     | '/app/'
+    | '/api/public/health'
     | '/marksheet/$examId/$studentId'
     | '/teachers/$slug/$teacherId'
   fileRoutesById: FileRoutesById
@@ -540,6 +552,7 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetRoute: typeof AuthResetRoute
   SchoolSlugRoute: typeof SchoolSlugRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   MarksheetExamIdStudentIdRoute: typeof MarksheetExamIdStudentIdRoute
   TeachersSlugTeacherIdRoute: typeof TeachersSlugTeacherIdRoute
 }
@@ -840,6 +853,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarksheetExamIdStudentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -923,6 +943,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthResetRoute: AuthResetRoute,
   SchoolSlugRoute: SchoolSlugRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
   MarksheetExamIdStudentIdRoute: MarksheetExamIdStudentIdRoute,
   TeachersSlugTeacherIdRoute: TeachersSlugTeacherIdRoute,
 }
