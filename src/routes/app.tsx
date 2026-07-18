@@ -202,6 +202,13 @@ function AppLayout() {
               <div className="truncate text-[10px] text-sidebar-muted">{roleLabel}</div>
             </div>
             <button
+              onClick={() => navigate({ to: "/auth/lock" })}
+              title="Lock screen"
+              className="rounded-md p-1.5 text-sidebar-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <Lock className="size-4" />
+            </button>
+            <button
               onClick={handleLogout}
               title="Sign out"
               className="rounded-md p-1.5 text-sidebar-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
