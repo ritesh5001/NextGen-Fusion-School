@@ -47,6 +47,8 @@ export const tenants = pgTable(
     homepageJson: text("homepage_json"),
     // Per-tenant theme (preset + overrides). See src/lib/theme-client.ts
     themeJson: text("theme_json"),
+    // Signed license key for this deployment (see src/lib/license.server.ts)
+    licenseKey: text("license_key"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
