@@ -119,7 +119,7 @@ function PublicTeacherProfile() {
             </p>
           ) : (
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-              {assignments.map((a, i) => (
+              {assignments.map((a: { subjectName: string; className: string }, i: number) => (
                 <li
                   key={i}
                   className="rounded-lg border border-border bg-card px-4 py-3 text-sm"
