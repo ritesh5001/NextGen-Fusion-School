@@ -87,9 +87,11 @@ const nav: NavGroup[] = [
   {
     label: "Institute",
     items: [
+      { to: "/app/users", label: "Users & Access", icon: Users },
       { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
       { to: "/app/website", label: "Public Website", icon: Globe },
       { to: "/app/settings", label: "Settings", icon: Settings },
+      { to: "/app/profile", label: "My Profile", icon: UserCog },
       { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
     ],
   },
