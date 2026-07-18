@@ -101,10 +101,8 @@ const nav: NavGroup[] = [
 
 ];
 
-const superAdminNav: NavGroup = {
-  label: "Platform",
-  items: [{ to: "/app/tenants", label: "Schools (Tenants)", icon: Landmark }],
-};
+// Single-institution deployment: no platform tenant switcher.
+
 
 function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
