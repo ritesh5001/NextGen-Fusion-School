@@ -1,15 +1,19 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
+import { GraduationCap, Users, Briefcase, ShieldCheck } from "lucide-react";
 import { login } from "@/lib/auth.functions";
-import { setSession } from "@/lib/session";
+import { setSession, type SessionUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { applyTheme, cacheTheme, parseTheme } from "@/lib/theme-client";
+import { getTenantThemeBySlug } from "@/lib/theme.functions";
 
 const search = z.object({
   redirect: z.string().optional(),
   tenant: z.string().optional(),
+  as: z.enum(["admin", "teacher", "student", "staff"]).optional(),
 });
 
 export const Route = createFileRoute("/auth/login")({
@@ -24,15 +28,45 @@ export const Route = createFileRoute("/auth/login")({
   component: LoginPage,
 });
 
+type Portal = "admin" | "teacher" | "student" | "staff";
+
+const PORTALS: { key: Portal; label: string; blurb: string; icon: typeof Users }[] = [
+  { key: "admin", label: "Manager", blurb: "Admin, principal, accountant, HR", icon: ShieldCheck },
+  { key: "teacher", label: "Teacher", blurb: "Classes, marks, attendance", icon: GraduationCap },
+  { key: "student", label: "Student", blurb: "Profile, results, fees", icon: Users },
+  { key: "staff", label: "Staff", blurb: "Librarian, hostel warden, support", icon: Briefcase },
+];
+
+/** Decide where to land the user based on the roles the server returned. */
+function landingFor(user: SessionUser): "/portal" | "/app" {
+  if (user.isSuperAdmin) return "/app";
+  const rk = user.roleKeys ?? [];
+  if (rk.includes("student") || rk.includes("parent")) return "/portal";
+  return "/app";
+}
+
 function LoginPage() {
   const nav = useNavigate();
   const s = useSearch({ from: "/auth/login" });
+  const [portal, setPortal] = useState<Portal>(s.as ?? "admin");
   const [tenantSlug, setTenantSlug] = useState(s.tenant ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [superAdmin, setSuperAdmin] = useState(false);
+
+  async function previewTenantTheme(slug: string) {
+    if (!slug) return;
+    try {
+      const res = await getTenantThemeBySlug({ data: { slug } });
+      const t = parseTheme(res.themeJson);
+      applyTheme(t);
+      cacheTheme(slug, t);
+    } catch {
+      /* ignore */
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +81,12 @@ function LoginPage() {
         },
       });
       setSession(res);
-      nav({ to: (s.redirect as "/app") ?? "/app" });
+      // Apply the tenant's theme immediately so the next screen is on-brand.
+      if (res.user.tenant?.slug) {
+        await previewTenantTheme(res.user.tenant.slug);
+      }
+      const fallback = landingFor(res.user);
+      nav({ to: (s.redirect as "/app") ?? fallback });
     } catch (err) {
       const msg = err instanceof Response ? await err.text() : (err as Error).message;
       setError(msg || "Sign in failed");
@@ -57,18 +96,40 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             ← Back to home
           </Link>
         </div>
-        <div className="border border-border rounded-2xl bg-card p-8 shadow-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Access your school's workspace.
-          </p>
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Sign in</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Access your school's workspace.</p>
+
+          {/* Portal picker — purely cosmetic hint; server accepts any role */}
+          <div className="mt-6 grid grid-cols-2 gap-2">
+            {PORTALS.map((p) => {
+              const active = portal === p.key;
+              const Icon = p.icon;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPortal(p.key)}
+                  className={`rounded-lg border p-3 text-left transition ${
+                    active
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border bg-background hover:border-border-strong"
+                  }`}
+                >
+                  <Icon className="size-4 text-primary" />
+                  <div className="mt-1.5 text-sm font-medium">{p.label}</div>
+                  <div className="text-[11px] text-muted-foreground">{p.blurb}</div>
+                </button>
+              );
+            })}
+          </div>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
             {!superAdmin && (
@@ -79,6 +140,7 @@ function LoginPage() {
                   placeholder="e.g. sunrise-academy"
                   value={tenantSlug}
                   onChange={(e) => setTenantSlug(e.target.value)}
+                  onBlur={() => previewTenantTheme(tenantSlug.trim())}
                   required={!superAdmin}
                   autoComplete="organization"
                 />

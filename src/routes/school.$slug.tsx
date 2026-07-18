@@ -52,6 +52,20 @@ function SchoolSite() {
     get({ data: { slug } })
       .then((s) => setSite(s as Site))
       .catch((e) => setError(String(e)));
+    // Apply the tenant's saved theme to the public site as well.
+    (async () => {
+      try {
+        const [{ getTenantThemeBySlug }, themeMod] = await Promise.all([
+          import("@/lib/theme.functions"),
+          import("@/lib/theme-client"),
+        ]);
+        const res = await getTenantThemeBySlug({ data: { slug } });
+        const t = themeMod.parseTheme(res.themeJson);
+        themeMod.applyTheme(t);
+      } catch {
+        /* ignore — defaults stay applied */
+      }
+    })();
   }, [slug]);
 
   if (error && !site) {

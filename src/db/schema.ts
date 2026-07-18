@@ -45,6 +45,8 @@ export const tenants = pgTable(
     }),
     // Public homepage content (editable from admin) — JSON blob stored as text
     homepageJson: text("homepage_json"),
+    // Per-tenant theme (preset + overrides). See src/lib/theme-client.ts
+    themeJson: text("theme_json"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

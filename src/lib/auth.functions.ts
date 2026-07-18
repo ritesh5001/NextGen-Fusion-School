@@ -44,7 +44,7 @@ export const login = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => loginInput.parse(d))
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
-    const { users, tenants, refreshTokens } = await import("@/db/schema");
+    const { users, tenants, refreshTokens, userRoles, roles } = await import("@/db/schema");
     const {
       verifyPassword,
       signAccessToken,
@@ -107,6 +107,26 @@ export const login = createServerFn({ method: "POST" })
       .set({ lastLoginAt: new Date() })
       .where(eq(users.id, user.id));
 
+    // Role keys drive the post-login redirect (student → portal, etc.)
+    const roleRows = await db
+      .select({ key: roles.key })
+      .from(userRoles)
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(eq(userRoles.userId, user.id));
+    const roleKeys = roleRows.map((r) => r.key);
+
+    let tenant: { id: string; name: string; slug: string; plan: string } | null = null;
+    if (user.tenantId) {
+      const tRow = (
+        await db
+          .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, plan: tenants.plan })
+          .from(tenants)
+          .where(eq(tenants.id, user.tenantId))
+          .limit(1)
+      )[0];
+      if (tRow) tenant = tRow;
+    }
+
     return {
       accessToken: access,
       refreshToken: refresh.token,
@@ -118,6 +138,8 @@ export const login = createServerFn({ method: "POST" })
         tenantId: user.tenantId,
         isSuperAdmin: user.isSuperAdmin,
         perms,
+        roleKeys,
+        tenant,
       },
     };
   });
