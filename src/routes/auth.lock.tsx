@@ -51,11 +51,7 @@ function LockScreen() {
       })) as {
         accessToken: string;
         refreshToken: string;
-        user: Parameters<typeof setSession>[0] extends infer S
-          ? S extends { user: infer U } | null
-            ? U
-            : never
-          : never;
+        user: import("@/lib/session").SessionUser;
       };
       setSession({
         accessToken: res.accessToken,

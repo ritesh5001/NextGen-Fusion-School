@@ -9,15 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as SchoolSlugRouteImport } from './routes/school.$slug'
 import { Route as AuthResetRouteImport } from './routes/auth.reset'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthLockRouteImport } from './routes/auth.lock'
 import { Route as AuthForgotRouteImport } from './routes/auth.forgot'
 import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
 import { Route as AppWebsiteRouteImport } from './routes/app.website'
+import { Route as AppUsersRouteImport } from './routes/app.users'
 import { Route as AppTenantsRouteImport } from './routes/app.tenants'
 import { Route as AppTeachersRouteImport } from './routes/app.teachers'
 import { Route as AppSubjectsRouteImport } from './routes/app.subjects'
@@ -26,6 +29,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppRolesRouteImport } from './routes/app.roles'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
 import { Route as AppPromotionRouteImport } from './routes/app.promotion'
+import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as AppPayrollRouteImport } from './routes/app.payroll'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppNoticesRouteImport } from './routes/app.notices'
@@ -44,8 +48,14 @@ import { Route as AppAttendanceRouteImport } from './routes/app.attendance'
 import { Route as AppAdmissionsRouteImport } from './routes/app.admissions'
 import { Route as AppAccountsRouteImport } from './routes/app.accounts'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
+import { Route as TeachersSlugTeacherIdRouteImport } from './routes/teachers.$slug.$teacherId'
 import { Route as MarksheetExamIdStudentIdRouteImport } from './routes/marksheet.$examId.$studentId'
 
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -76,6 +86,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthLockRoute = AuthLockRouteImport.update({
+  id: '/auth/lock',
+  path: '/auth/lock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthForgotRoute = AuthForgotRouteImport.update({
   id: '/auth/forgot',
   path: '/auth/forgot',
@@ -89,6 +104,11 @@ const ApplySlugRoute = ApplySlugRouteImport.update({
 const AppWebsiteRoute = AppWebsiteRouteImport.update({
   id: '/website',
   path: '/website',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUsersRoute = AppUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTenantsRoute = AppTenantsRouteImport.update({
@@ -129,6 +149,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
 const AppPromotionRoute = AppPromotionRouteImport.update({
   id: '/promotion',
   path: '/promotion',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPayrollRoute = AppPayrollRouteImport.update({
@@ -221,6 +246,11 @@ const AppAcademicYearsRoute = AppAcademicYearsRouteImport.update({
   path: '/academic-years',
   getParentRoute: () => AppRoute,
 } as any)
+const TeachersSlugTeacherIdRoute = TeachersSlugTeacherIdRouteImport.update({
+  id: '/teachers/$slug/$teacherId',
+  path: '/teachers/$slug/$teacherId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarksheetExamIdStudentIdRoute =
   MarksheetExamIdStudentIdRouteImport.update({
     id: '/marksheet/$examId/$studentId',
@@ -231,6 +261,7 @@ const MarksheetExamIdStudentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/portal': typeof PortalRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -249,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/app/notices': typeof AppNoticesRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/payroll': typeof AppPayrollRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
@@ -257,17 +289,21 @@ export interface FileRoutesByFullPath {
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
+  '/auth/lock': typeof AuthLockRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
   '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
+  '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/portal': typeof PortalRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -286,6 +322,7 @@ export interface FileRoutesByTo {
   '/app/notices': typeof AppNoticesRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/payroll': typeof AppPayrollRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
@@ -294,19 +331,23 @@ export interface FileRoutesByTo {
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
+  '/auth/lock': typeof AuthLockRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
   '/school/$slug': typeof SchoolSlugRoute
   '/app': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
+  '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/portal': typeof PortalRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -325,6 +366,7 @@ export interface FileRoutesById {
   '/app/notices': typeof AppNoticesRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/payroll': typeof AppPayrollRoute
+  '/app/profile': typeof AppProfileRoute
   '/app/promotion': typeof AppPromotionRoute
   '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
@@ -333,20 +375,24 @@ export interface FileRoutesById {
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/tenants': typeof AppTenantsRoute
+  '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
   '/auth/forgot': typeof AuthForgotRoute
+  '/auth/lock': typeof AuthLockRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset': typeof AuthResetRoute
   '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
+  '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/app'
+    | '/portal'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -365,6 +411,7 @@ export interface FileRouteTypes {
     | '/app/notices'
     | '/app/notifications'
     | '/app/payroll'
+    | '/app/profile'
     | '/app/promotion'
     | '/app/reports'
     | '/app/roles'
@@ -373,17 +420,21 @@ export interface FileRouteTypes {
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/app/users'
     | '/app/website'
     | '/apply/$slug'
     | '/auth/forgot'
+    | '/auth/lock'
     | '/auth/login'
     | '/auth/reset'
     | '/school/$slug'
     | '/app/'
     | '/marksheet/$examId/$studentId'
+    | '/teachers/$slug/$teacherId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/portal'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -402,6 +453,7 @@ export interface FileRouteTypes {
     | '/app/notices'
     | '/app/notifications'
     | '/app/payroll'
+    | '/app/profile'
     | '/app/promotion'
     | '/app/reports'
     | '/app/roles'
@@ -410,18 +462,22 @@ export interface FileRouteTypes {
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/app/users'
     | '/app/website'
     | '/apply/$slug'
     | '/auth/forgot'
+    | '/auth/lock'
     | '/auth/login'
     | '/auth/reset'
     | '/school/$slug'
     | '/app'
     | '/marksheet/$examId/$studentId'
+    | '/teachers/$slug/$teacherId'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/portal'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -440,6 +496,7 @@ export interface FileRouteTypes {
     | '/app/notices'
     | '/app/notifications'
     | '/app/payroll'
+    | '/app/profile'
     | '/app/promotion'
     | '/app/reports'
     | '/app/roles'
@@ -448,29 +505,42 @@ export interface FileRouteTypes {
     | '/app/subjects'
     | '/app/teachers'
     | '/app/tenants'
+    | '/app/users'
     | '/app/website'
     | '/apply/$slug'
     | '/auth/forgot'
+    | '/auth/lock'
     | '/auth/login'
     | '/auth/reset'
     | '/school/$slug'
     | '/app/'
     | '/marksheet/$examId/$studentId'
+    | '/teachers/$slug/$teacherId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  PortalRoute: typeof PortalRoute
   ApplySlugRoute: typeof ApplySlugRoute
   AuthForgotRoute: typeof AuthForgotRoute
+  AuthLockRoute: typeof AuthLockRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetRoute: typeof AuthResetRoute
   SchoolSlugRoute: typeof SchoolSlugRoute
   MarksheetExamIdStudentIdRoute: typeof MarksheetExamIdStudentIdRoute
+  TeachersSlugTeacherIdRoute: typeof TeachersSlugTeacherIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -513,6 +583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/lock': {
+      id: '/auth/lock'
+      path: '/auth/lock'
+      fullPath: '/auth/lock'
+      preLoaderRoute: typeof AuthLockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/forgot': {
       id: '/auth/forgot'
       path: '/auth/forgot'
@@ -532,6 +609,13 @@ declare module '@tanstack/react-router' {
       path: '/website'
       fullPath: '/app/website'
       preLoaderRoute: typeof AppWebsiteRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/users': {
+      id: '/app/users'
+      path: '/users'
+      fullPath: '/app/users'
+      preLoaderRoute: typeof AppUsersRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/tenants': {
@@ -588,6 +672,13 @@ declare module '@tanstack/react-router' {
       path: '/promotion'
       fullPath: '/app/promotion'
       preLoaderRoute: typeof AppPromotionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/profile': {
+      id: '/app/profile'
+      path: '/profile'
+      fullPath: '/app/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/payroll': {
@@ -716,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAcademicYearsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/teachers/$slug/$teacherId': {
+      id: '/teachers/$slug/$teacherId'
+      path: '/teachers/$slug/$teacherId'
+      fullPath: '/teachers/$slug/$teacherId'
+      preLoaderRoute: typeof TeachersSlugTeacherIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marksheet/$examId/$studentId': {
       id: '/marksheet/$examId/$studentId'
       path: '/marksheet/$examId/$studentId'
@@ -745,6 +843,7 @@ interface AppRouteChildren {
   AppNoticesRoute: typeof AppNoticesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPayrollRoute: typeof AppPayrollRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppPromotionRoute: typeof AppPromotionRoute
   AppReportsRoute: typeof AppReportsRoute
   AppRolesRoute: typeof AppRolesRoute
@@ -753,6 +852,7 @@ interface AppRouteChildren {
   AppSubjectsRoute: typeof AppSubjectsRoute
   AppTeachersRoute: typeof AppTeachersRoute
   AppTenantsRoute: typeof AppTenantsRoute
+  AppUsersRoute: typeof AppUsersRoute
   AppWebsiteRoute: typeof AppWebsiteRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -776,6 +876,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNoticesRoute: AppNoticesRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPayrollRoute: AppPayrollRoute,
+  AppProfileRoute: AppProfileRoute,
   AppPromotionRoute: AppPromotionRoute,
   AppReportsRoute: AppReportsRoute,
   AppRolesRoute: AppRolesRoute,
@@ -784,6 +885,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSubjectsRoute: AppSubjectsRoute,
   AppTeachersRoute: AppTeachersRoute,
   AppTenantsRoute: AppTenantsRoute,
+  AppUsersRoute: AppUsersRoute,
   AppWebsiteRoute: AppWebsiteRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -793,12 +895,15 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  PortalRoute: PortalRoute,
   ApplySlugRoute: ApplySlugRoute,
   AuthForgotRoute: AuthForgotRoute,
+  AuthLockRoute: AuthLockRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetRoute: AuthResetRoute,
   SchoolSlugRoute: SchoolSlugRoute,
   MarksheetExamIdStudentIdRoute: MarksheetExamIdStudentIdRoute,
+  TeachersSlugTeacherIdRoute: TeachersSlugTeacherIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
