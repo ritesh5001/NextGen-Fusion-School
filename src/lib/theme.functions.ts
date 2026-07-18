@@ -22,7 +22,7 @@ export const getTenantThemeBySlug = createServerFn({ method: "GET" })
     const { tenants } = await import("@/db/schema");
     const db = getDb();
     const rows = await db
-      .select({ themeJson: tenants.themeJson, slug: tenants.slug })
+      .select({ themeJson: tenants.themeJson })
       .from(tenants)
       .where(eq(tenants.slug, data.slug))
       .limit(1);
@@ -31,32 +31,32 @@ export const getTenantThemeBySlug = createServerFn({ method: "GET" })
 
 /** Authenticated — read the current user's tenant theme. */
 export const getMyTenantTheme = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const ctx = await requireAuth();
-    if (!ctx.tenantId) return { themeJson: null };
+  .middleware([requireAuth])
+  .handler(async ({ context }) => {
+    if (!context.tenantId) return { themeJson: null };
     const { getDb } = await import("@/db/client.server");
     const { tenants } = await import("@/db/schema");
     const db = getDb();
     const rows = await db
       .select({ themeJson: tenants.themeJson })
       .from(tenants)
-      .where(eq(tenants.id, ctx.tenantId))
+      .where(eq(tenants.id, context.tenantId))
       .limit(1);
     return { themeJson: rows[0]?.themeJson ?? null };
   });
 
 /** Authenticated — save theme for the current user's tenant. */
 export const saveMyTenantTheme = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
   .inputValidator((d: unknown) => themeSchema.parse(d))
-  .handler(async ({ data }) => {
-    const ctx = await requireAuth();
-    if (!ctx.tenantId) throw new Response("Super admin has no tenant", { status: 400 });
+  .handler(async ({ data, context }) => {
+    if (!context.tenantId) throw new Response("Super admin has no tenant", { status: 400 });
     const { getDb } = await import("@/db/client.server");
     const { tenants } = await import("@/db/schema");
     const db = getDb();
     await db
       .update(tenants)
       .set({ themeJson: JSON.stringify(data), updatedAt: new Date() })
-      .where(eq(tenants.id, ctx.tenantId));
+      .where(eq(tenants.id, context.tenantId));
     return { ok: true };
   });
