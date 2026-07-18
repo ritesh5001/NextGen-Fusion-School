@@ -10,6 +10,7 @@ export type SessionUser = {
   tenantId: string | null;
   isSuperAdmin: boolean;
   perms: string[];
+  roleKeys?: string[];
   tenant?: { id: string; name: string; slug: string; plan: string } | null;
 };
 
