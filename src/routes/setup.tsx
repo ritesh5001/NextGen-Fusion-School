@@ -181,6 +181,17 @@ function SetupPage() {
             {busy ? "Setting up…" : "Complete setup"}
           </Button>
         </form>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Developed by{" "}
+          <a
+            href="https://nextgenfusion.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            NextGen Fusion
+          </a>
+        </p>
       </div>
     </div>
   );
