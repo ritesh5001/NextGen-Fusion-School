@@ -8,6 +8,7 @@ import {
   saveSmtpSettings,
   saveReportSettings,
 } from "@/lib/settings.functions";
+import { getLicenseStatus, setLicenseKey } from "@/lib/license.functions";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,7 +93,12 @@ function SettingsPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="email">Email / SMTP</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="license">License</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="license" className="mt-6">
+          <LicensePanel />
+        </TabsContent>
 
         {/* ------------- GENERAL ------------- */}
         <TabsContent value="general" className="mt-6">
