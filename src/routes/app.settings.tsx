@@ -8,6 +8,7 @@ import {
   saveSmtpSettings,
   saveReportSettings,
 } from "@/lib/settings.functions";
+import { getMailStatus, sendTestEmail } from "@/lib/mail.functions";
 import { getLicenseStatus, setLicenseKey } from "@/lib/license.functions";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
@@ -91,7 +92,7 @@ function SettingsPage() {
       <Tabs defaultValue="general" className="mt-6">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="email">Email / SMTP</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="license">License</TabsTrigger>
         </TabsList>
@@ -260,8 +261,17 @@ function SmtpForm({
   }) => Promise<void>;
   busy: boolean;
 }) {
-  const [secure, setSecure] = useState(initial?.smtpSecure ?? true);
-  const [password, setPassword] = useState(initial?.smtpPassword ?? "");
+  const mailStatus = useServerFn(getMailStatus);
+  const sendTest = useServerFn(sendTestEmail);
+  const [status, setStatus] = useState<{ configured: boolean } | null>(null);
+  const [testTo, setTestTo] = useState("");
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    mailStatus().then(setStatus).catch(() => setStatus({ configured: false }));
+  }, [mailStatus]);
+
+  const fromDomain = (initial?.smtpFromEmail ?? "").split("@")[1] ?? "";
 
   return (
     <form
@@ -269,67 +279,53 @@ function SmtpForm({
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         await onSubmit({
-          smtpHost: String(fd.get("smtpHost") ?? "") || null,
-          smtpPort: fd.get("smtpPort") ? Number(fd.get("smtpPort")) : null,
-          smtpUsername: String(fd.get("smtpUsername") ?? "") || null,
-          smtpPassword: password || null,
+          // Resend needs only from-email + from-name; legacy SMTP columns
+          // are preserved but left unused.
+          smtpHost: null,
+          smtpPort: null,
+          smtpUsername: null,
+          smtpPassword: null,
           smtpFromEmail: String(fd.get("smtpFromEmail") ?? "") || null,
           smtpFromName: String(fd.get("smtpFromName") ?? "") || null,
-          smtpSecure: secure,
+          smtpSecure: true,
         });
       }}
     >
-      <Card className="p-6 max-w-3xl">
-        <h2 className="mb-4 font-display text-lg font-semibold">SMTP configuration</h2>
-        <p className="text-sm text-muted-foreground mb-5">
-          Used for password resets, notice emails, and admission confirmations.
-          Leave password blank to keep the existing one.
-        </p>
+      <Card className="p-6 max-w-3xl space-y-5">
+        <div>
+          <h2 className="font-display text-lg font-semibold">Email delivery</h2>
+          <p className="text-sm text-muted-foreground">
+            Emails are sent through <strong>Resend</strong>. The only server-side
+            secret required is <code className="text-xs">RESEND_API_KEY</code>.
+            The sender name and address below appear in every outgoing message —
+            password resets, admission confirmations, notices, and receipts.
+          </p>
+        </div>
+
+        <div
+          className={`rounded-lg border p-3 text-sm ${
+            status?.configured
+              ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
+              : "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400"
+          }`}
+        >
+          {status?.configured
+            ? "✓ RESEND_API_KEY detected — email delivery is active."
+            : "⚠ RESEND_API_KEY is not set on this deployment. Add it to your environment to enable sending."}
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <Label htmlFor="smtpHost">SMTP host</Label>
-            <Input
-              id="smtpHost"
-              name="smtpHost"
-              placeholder="smtp.gmail.com"
-              defaultValue={initial?.smtpHost ?? ""}
-            />
-          </div>
           <div>
-            <Label htmlFor="smtpPort">Port</Label>
+            <Label htmlFor="smtpFromName">From name</Label>
             <Input
-              id="smtpPort"
-              name="smtpPort"
-              type="number"
-              placeholder="587"
-              defaultValue={initial?.smtpPort ?? ""}
+              id="smtpFromName"
+              name="smtpFromName"
+              placeholder="e.g. Greenfield Public School"
+              defaultValue={initial?.smtpFromName ?? ""}
             />
-          </div>
-          <div className="flex items-end gap-2 pb-1">
-            <Switch
-              id="smtpSecure"
-              checked={secure}
-              onCheckedChange={setSecure}
-            />
-            <Label htmlFor="smtpSecure">Use TLS/SSL</Label>
-          </div>
-          <div>
-            <Label htmlFor="smtpUsername">Username</Label>
-            <Input
-              id="smtpUsername"
-              name="smtpUsername"
-              defaultValue={initial?.smtpUsername ?? ""}
-            />
-          </div>
-          <div>
-            <Label htmlFor="smtpPassword">Password</Label>
-            <Input
-              id="smtpPassword"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={initial?.smtpPassword ? "•••••••• (unchanged)" : ""}
-            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Defaults to your school name.
+            </p>
           </div>
           <div>
             <Label htmlFor="smtpFromEmail">From email</Label>
@@ -337,23 +333,56 @@ function SmtpForm({
               id="smtpFromEmail"
               name="smtpFromEmail"
               type="email"
+              placeholder="no-reply@yourschool.com"
               defaultValue={initial?.smtpFromEmail ?? ""}
             />
-          </div>
-          <div>
-            <Label htmlFor="smtpFromName">From name</Label>
-            <Input
-              id="smtpFromName"
-              name="smtpFromName"
-              defaultValue={initial?.smtpFromName ?? ""}
-            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {fromDomain
+                ? `Verify the domain "${fromDomain}" in your Resend dashboard.`
+                : "Leave blank to use onboarding@resend.dev for testing."}
+            </p>
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <Button type="submit" disabled={busy}>
-            {busy ? "Saving…" : "Save SMTP"}
+            {busy ? "Saving…" : "Save email settings"}
           </Button>
+        </div>
+
+        <div className="rounded-lg border border-border bg-muted/30 p-4">
+          <div className="mb-2 text-sm font-medium">Send a test email</div>
+          <div className="flex flex-wrap gap-2">
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={testTo}
+              onChange={(e) => setTestTo(e.target.value)}
+              className="max-w-xs"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={testing || !testTo || !status?.configured}
+              onClick={async () => {
+                setTesting(true);
+                try {
+                  await sendTest({ data: { to: testTo } });
+                  toast.success("Test email sent");
+                } catch (err) {
+                  const msg =
+                    err instanceof Response
+                      ? await err.text()
+                      : (err as Error).message;
+                  toast.error(msg || "Failed to send");
+                } finally {
+                  setTesting(false);
+                }
+              }}
+            >
+              {testing ? "Sending…" : "Send test"}
+            </Button>
+          </div>
         </div>
       </Card>
     </form>
