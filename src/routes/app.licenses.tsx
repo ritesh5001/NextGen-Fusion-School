@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, KeyRound } from "lucide-react";
+import { Copy } from "lucide-react";
 
 export const Route = createFileRoute("/app/licenses")({
   component: LicensesPage,
