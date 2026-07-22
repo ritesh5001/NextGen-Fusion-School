@@ -35,6 +35,7 @@ function SetupPage() {
   const [pwd, setPwd] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
+  const [licenseKey, setLicenseKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
