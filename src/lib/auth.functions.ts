@@ -221,9 +221,15 @@ export const refresh = createServerFn({ method: "POST" })
       ? ["*"]
       : await loadEffectivePermissions(u.id);
 
+    let effectiveTid = u.tenantId;
+    if (!effectiveTid && u.isSuperAdmin) {
+      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      if (allT.length === 1) effectiveTid = allT[0].id;
+    }
+
     const access = await signAccessToken({
       sub: u.id,
-      tid: u.tenantId,
+      tid: effectiveTid,
       sa: u.isSuperAdmin,
       perms,
     });
