@@ -103,6 +103,32 @@ const nav: NavGroup[] = [
 
 ];
 
+// Super-admin (vendor / platform operator) only needs licensing + platform utilities.
+// School-operational modules (students, teachers, fees, etc.) are hidden.
+const superAdminNav: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [{ to: "/app", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Platform",
+    items: [
+      { to: "/app/licenses", label: "License Manager", icon: IdCard },
+      { to: "/app/users", label: "Users & Access", icon: Users },
+      { to: "/app/roles", label: "Roles & Permissions", icon: UserCog },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { to: "/app/settings", label: "Settings", icon: Settings },
+      { to: "/app/appearance", label: "Appearance", icon: Palette },
+      { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
+      { to: "/app/profile", label: "My Profile", icon: UserCog },
+    ],
+  },
+];
+
 // Single-institution deployment: no platform tenant switcher.
 
 
@@ -180,7 +206,7 @@ function AppLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
-          {nav.map((group) => (
+          {(user.isSuperAdmin ? superAdminNav : nav).map((group) => (
             <div key={group.label} className="mb-4">
               <div className="mb-1 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-sidebar-muted">
                 {group.label}
