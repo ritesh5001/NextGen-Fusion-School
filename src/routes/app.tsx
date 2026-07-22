@@ -97,6 +97,7 @@ const nav: NavGroup[] = [
       { to: "/app/settings", label: "Settings", icon: Settings },
       { to: "/app/profile", label: "My Profile", icon: UserCog },
       { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
+      { to: "/app/licenses", label: "License Manager", icon: IdCard },
     ],
   },
 

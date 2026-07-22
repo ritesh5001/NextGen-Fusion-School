@@ -20,6 +20,7 @@ const setupInput = z.object({
   ownerPassword: z.string().min(8),
   ownerFirstName: z.string().min(1),
   ownerLastName: z.string().optional(),
+  licenseKey: z.string().min(10),
 });
 
 /** Public status check — used by the setup route and by the login page. */
@@ -43,7 +44,19 @@ export const runSetup = createServerFn({ method: "POST" })
     const { getDb } = await import("@/db/client.server");
     const { tenants, users, roles, userRoles, rolePermissions } = await import("@/db/schema");
     const { hashPassword } = await import("./auth-core.server");
+    const { verifyLicense } = await import("./license.server");
     const db = getDb();
+
+    // Gate registration on a valid, verified license key. The signed payload
+    // may bind the license to a specific school email — we enforce that here.
+    const status = await verifyLicense(data.licenseKey);
+    if (!status.valid || !status.payload) {
+      throw new Response(`Invalid license: ${status.reason ?? "unknown"}`, { status: 400 });
+    }
+    const boundEmail = (status.payload as unknown as { email?: string }).email;
+    if (boundEmail && boundEmail.toLowerCase() !== data.ownerEmail.toLowerCase()) {
+      throw new Response("License is issued to a different school email", { status: 400 });
+    }
 
     const existing = await db.select({ id: tenants.id }).from(tenants).limit(1);
     if (existing[0]) {
@@ -58,6 +71,7 @@ export const runSetup = createServerFn({ method: "POST" })
         name: data.schoolName,
         plan: "premium", // single-tenant licensed deployment = all features
         subscriptionStatus: "active",
+        licenseKey: data.licenseKey,
       })
       .returning({ id: tenants.id, slug: tenants.slug, name: tenants.name });
 

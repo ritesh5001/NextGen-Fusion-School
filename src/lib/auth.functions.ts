@@ -102,9 +102,17 @@ export const login = createServerFn({ method: "POST" })
       ? ["*"]
       : await loadEffectivePermissions(user.id);
 
+    // Single-institution mode: super-admin without a tenant adopts the sole tenant
+    // so all tenant-scoped modules work out of the box.
+    let effectiveTid = user.tenantId;
+    if (!effectiveTid && user.isSuperAdmin) {
+      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      if (allT.length === 1) effectiveTid = allT[0].id;
+    }
+
     const access = await signAccessToken({
       sub: user.id,
-      tid: user.tenantId,
+      tid: effectiveTid,
       sa: user.isSuperAdmin,
       perms,
     });
@@ -131,12 +139,12 @@ export const login = createServerFn({ method: "POST" })
     const roleKeys = roleRows.map((r) => r.key);
 
     let tenant: { id: string; name: string; slug: string; plan: string } | null = null;
-    if (user.tenantId) {
+    if (effectiveTid) {
       const tRow = (
         await db
           .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, plan: tenants.plan })
           .from(tenants)
-          .where(eq(tenants.id, user.tenantId))
+          .where(eq(tenants.id, effectiveTid))
           .limit(1)
       )[0];
       if (tRow) tenant = tRow;
@@ -150,7 +158,7 @@ export const login = createServerFn({ method: "POST" })
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        tenantId: user.tenantId,
+        tenantId: effectiveTid,
         isSuperAdmin: user.isSuperAdmin,
         perms,
         roleKeys,
@@ -166,7 +174,7 @@ export const refresh = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
-    const { refreshTokens, users } = await import("@/db/schema");
+    const { refreshTokens, users, tenants } = await import("@/db/schema");
     const {
       verifyRefreshToken,
       hashToken,
@@ -213,9 +221,15 @@ export const refresh = createServerFn({ method: "POST" })
       ? ["*"]
       : await loadEffectivePermissions(u.id);
 
+    let effectiveTid = u.tenantId;
+    if (!effectiveTid && u.isSuperAdmin) {
+      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      if (allT.length === 1) effectiveTid = allT[0].id;
+    }
+
     const access = await signAccessToken({
       sub: u.id,
-      tid: u.tenantId,
+      tid: effectiveTid,
       sa: u.isSuperAdmin,
       perms,
     });

@@ -35,6 +35,7 @@ function SetupPage() {
   const [pwd, setPwd] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
+  const [licenseKey, setLicenseKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -67,6 +68,7 @@ function SetupPage() {
           ownerPassword: pwd,
           ownerFirstName: first,
           ownerLastName: last || undefined,
+          licenseKey: licenseKey.trim(),
         },
       });
       // Auto-sign the owner in and take them to the dashboard.
@@ -170,6 +172,25 @@ function SetupPage() {
               <p className="text-[11px] text-muted-foreground">Minimum 8 characters.</p>
             </div>
           </div>
+
+          <div className="border-t border-border pt-5">
+
+            <h2 className="font-display text-lg font-semibold tracking-tight">License key</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paste the license key issued by NextGen Fusion for this school. Registration is gated on a valid, verified key.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lk">License key</Label>
+            <Input
+              id="lk"
+              value={licenseKey}
+              onChange={(e) => setLicenseKey(e.target.value)}
+              placeholder="Paste your signed license key"
+              required
+            />
+          </div>
+
 
           {err && (
             <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
