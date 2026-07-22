@@ -92,7 +92,7 @@ function SettingsPage() {
       <Tabs defaultValue="general" className="mt-6">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="email">Email / SMTP</TabsTrigger>
+          <TabsTrigger value="email">Email</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="license">License</TabsTrigger>
         </TabsList>
