@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { getInstallStatus } from "@/lib/setup.functions";
+import { SchoolSiteView } from "./school.$slug";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,32 +26,36 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const navigate = useNavigate();
-  const [installed, setInstalled] = useState<boolean | null>(null);
+  const [state, setState] = useState<
+    | { status: "loading" }
+    | { status: "installed"; slug: string }
+    | { status: "empty" }
+  >({ status: "loading" });
 
   useEffect(() => {
     getInstallStatus()
       .then((s) => {
         if (s.installed && s.institution?.slug) {
-          // Once installed, the school's public website is the homepage.
-          navigate({
-            to: "/school/$slug",
-            params: { slug: s.institution.slug },
-            replace: true,
-          });
-          return;
+          setState({ status: "installed", slug: s.institution.slug });
+        } else {
+          setState({ status: "empty" });
         }
-        setInstalled(false);
       })
-      .catch(() => setInstalled(false));
-  }, [navigate]);
+      .catch(() => setState({ status: "empty" }));
+  }, []);
 
-  if (installed === null) {
+  if (state.status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-sm text-muted-foreground">Loading…</div>
       </div>
     );
+  }
+
+  // Installed — render the school's public website inline at the root domain.
+  // The site's own header includes a Login button.
+  if (state.status === "installed") {
+    return <SchoolSiteView slug={state.slug} />;
   }
 
   // Not installed yet — show a minimal setup CTA.
