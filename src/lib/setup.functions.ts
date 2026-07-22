@@ -20,6 +20,7 @@ const setupInput = z.object({
   ownerPassword: z.string().min(8),
   ownerFirstName: z.string().min(1),
   ownerLastName: z.string().optional(),
+  licenseKey: z.string().min(10),
 });
 
 /** Public status check — used by the setup route and by the login page. */
