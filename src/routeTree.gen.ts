@@ -34,6 +34,7 @@ import { Route as AppPayrollRouteImport } from './routes/app.payroll'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppNoticesRouteImport } from './routes/app.notices'
 import { Route as AppMarksRouteImport } from './routes/app.marks'
+import { Route as AppLicensesRouteImport } from './routes/app.licenses'
 import { Route as AppLibraryRouteImport } from './routes/app.library'
 import { Route as AppIdCardsRouteImport } from './routes/app.id-cards'
 import { Route as AppHrmRouteImport } from './routes/app.hrm'
@@ -178,6 +179,11 @@ const AppMarksRoute = AppMarksRouteImport.update({
   path: '/marks',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLicensesRoute = AppLicensesRouteImport.update({
+  id: '/licenses',
+  path: '/licenses',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLibraryRoute = AppLibraryRouteImport.update({
   id: '/library',
   path: '/library',
@@ -290,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/app/hrm': typeof AppHrmRoute
   '/app/id-cards': typeof AppIdCardsRoute
   '/app/library': typeof AppLibraryRoute
+  '/app/licenses': typeof AppLicensesRoute
   '/app/marks': typeof AppMarksRoute
   '/app/notices': typeof AppNoticesRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -334,6 +341,7 @@ export interface FileRoutesByTo {
   '/app/hrm': typeof AppHrmRoute
   '/app/id-cards': typeof AppIdCardsRoute
   '/app/library': typeof AppLibraryRoute
+  '/app/licenses': typeof AppLicensesRoute
   '/app/marks': typeof AppMarksRoute
   '/app/notices': typeof AppNoticesRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/app/hrm': typeof AppHrmRoute
   '/app/id-cards': typeof AppIdCardsRoute
   '/app/library': typeof AppLibraryRoute
+  '/app/licenses': typeof AppLicensesRoute
   '/app/marks': typeof AppMarksRoute
   '/app/notices': typeof AppNoticesRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -427,6 +436,7 @@ export interface FileRouteTypes {
     | '/app/hrm'
     | '/app/id-cards'
     | '/app/library'
+    | '/app/licenses'
     | '/app/marks'
     | '/app/notices'
     | '/app/notifications'
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/app/hrm'
     | '/app/id-cards'
     | '/app/library'
+    | '/app/licenses'
     | '/app/marks'
     | '/app/notices'
     | '/app/notifications'
@@ -516,6 +527,7 @@ export interface FileRouteTypes {
     | '/app/hrm'
     | '/app/id-cards'
     | '/app/library'
+    | '/app/licenses'
     | '/app/marks'
     | '/app/notices'
     | '/app/notifications'
@@ -735,6 +747,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMarksRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/licenses': {
+      id: '/app/licenses'
+      path: '/licenses'
+      fullPath: '/app/licenses'
+      preLoaderRoute: typeof AppLicensesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/library': {
       id: '/app/library'
       path: '/library'
@@ -880,6 +899,7 @@ interface AppRouteChildren {
   AppHrmRoute: typeof AppHrmRoute
   AppIdCardsRoute: typeof AppIdCardsRoute
   AppLibraryRoute: typeof AppLibraryRoute
+  AppLicensesRoute: typeof AppLicensesRoute
   AppMarksRoute: typeof AppMarksRoute
   AppNoticesRoute: typeof AppNoticesRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -913,6 +933,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHrmRoute: AppHrmRoute,
   AppIdCardsRoute: AppIdCardsRoute,
   AppLibraryRoute: AppLibraryRoute,
+  AppLicensesRoute: AppLicensesRoute,
   AppMarksRoute: AppMarksRoute,
   AppNoticesRoute: AppNoticesRoute,
   AppNotificationsRoute: AppNotificationsRoute,

@@ -60,8 +60,8 @@ function LicensesPage() {
       <PageHeader
         title="License Manager"
         description="Generate signed license keys for schools. Each key is bound to the school's owner email — registration on their deployment is gated on this key."
-        icon={KeyRound}
       />
+
 
       {hasKeys && !hasKeys.hasPrivateKey && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
