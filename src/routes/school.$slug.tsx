@@ -44,6 +44,11 @@ type Site = Awaited<ReturnType<typeof getPublicSite>>;
 
 function SchoolSite() {
   const { slug } = Route.useParams();
+  return <SchoolSiteView slug={slug} />;
+}
+
+export function SchoolSiteView({ slug }: { slug: string }) {
+
   const get = useServerFn(getPublicSite);
   const [site, setSite] = useState<Site | null>(null);
   const [error, setError] = useState("");
