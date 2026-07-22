@@ -8,6 +8,7 @@ import {
   saveSmtpSettings,
   saveReportSettings,
 } from "@/lib/settings.functions";
+import { getMailStatus, sendTestEmail } from "@/lib/mail.functions";
 import { getLicenseStatus, setLicenseKey } from "@/lib/license.functions";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
