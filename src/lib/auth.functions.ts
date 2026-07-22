@@ -301,7 +301,14 @@ export const logout = createServerFn({ method: "POST" })
     if (!data.refreshToken) return { ok: true };
     const { getDb } = await import("@/db/client.server");
     const { refreshTokens } = await import("@/db/schema");
-    const { hashToken } = await import("./auth-core.server");
+    const { hashToken, verifyRefreshToken } = await import("./auth-core.server");
+    // Hardcoded admin refresh tokens are never persisted, so nothing to revoke.
+    try {
+      const { sub } = await verifyRefreshToken(data.refreshToken);
+      if (sub === PLATFORM_ADMIN_ID) return { ok: true };
+    } catch {
+      /* fall through — treat as normal token */
+    }
     const db = getDb();
     await db
       .update(refreshTokens)
@@ -317,6 +324,30 @@ export const me = createServerFn({ method: "GET" })
     const { getDb } = await import("@/db/client.server");
     const { users, tenants } = await import("@/db/schema");
     const db = getDb();
+
+    /* Hardcoded platform admin: no DB row, synthesize the profile. */
+    if (context.userId === PLATFORM_ADMIN_ID) {
+      const t = context.tenantId
+        ? (
+            await db
+              .select()
+              .from(tenants)
+              .where(eq(tenants.id, context.tenantId))
+              .limit(1)
+          )[0]
+        : null;
+      return {
+        id: PLATFORM_ADMIN_ID,
+        email: PLATFORM_ADMIN_EMAIL,
+        firstName: "NextGen",
+        lastName: "Fusion",
+        avatarUrl: null,
+        isSuperAdmin: true,
+        tenant: t ? { id: t.id, name: t.name, slug: t.slug, plan: t.plan } : null,
+        perms: ["*"],
+      };
+    }
+
     const u = (
       await db.select().from(users).where(eq(users.id, context.userId)).limit(1)
     )[0];
@@ -336,13 +367,14 @@ export const me = createServerFn({ method: "GET" })
       firstName: u.firstName,
       lastName: u.lastName,
       avatarUrl: u.avatarUrl,
-      isSuperAdmin: u.isSuperAdmin,
+      isSuperAdmin: false,
       tenant: tenant
         ? { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan }
         : null,
       perms: context.perms,
     };
   });
+
 
 /* -------------------- REGISTER (tenant admin bootstrap) -------------------- */
 export const registerTenantAdmin = createServerFn({ method: "POST" })
