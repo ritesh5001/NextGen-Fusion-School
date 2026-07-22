@@ -7,6 +7,10 @@
  * setup — the vendor deployment issues + verifies with its own keypair.
  */
 import { verify as edVerify } from "@noble/ed25519";
+import { sha512 } from "@noble/hashes/sha2.js";
+import { hashes } from "@noble/ed25519";
+
+hashes.sha512 = sha512;
 
 export interface LicensePayload {
   institution: string;
