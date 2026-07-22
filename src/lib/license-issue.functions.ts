@@ -40,9 +40,11 @@ async function loadOrCreateKeys(): Promise<{ priv: string; pub: string }> {
     return { priv: existing[0].privateKey, pub: existing[0].publicKey };
   }
 
-  const { getPublicKey, utils } = await import("@noble/ed25519");
-  const privBytes = utils.randomSecretKey();
-  const pubBytes = await getPublicKey(privBytes);
+  const ed = await import("@noble/ed25519");
+  const { sha512 } = await import("@noble/hashes/sha2.js");
+  ed.hashes.sha512 = sha512;
+  const privBytes = ed.utils.randomSecretKey();
+  const pubBytes = await ed.getPublicKey(privBytes);
   const priv = toB64Url(privBytes);
   const pub = toB64Url(pubBytes);
   await db.insert(platformKeys).values({ id: 1, privateKey: priv, publicKey: pub });
@@ -65,7 +67,9 @@ export const issueLicense = createServerFn({ method: "POST" })
       throw new Response("Forbidden", { status: 403 });
     }
     const { priv } = await loadOrCreateKeys();
-    const { sign } = await import("@noble/ed25519");
+    const ed = await import("@noble/ed25519");
+    const { sha512 } = await import("@noble/hashes/sha2.js");
+    ed.hashes.sha512 = sha512;
     const payload = {
       institution: data.institution,
       email: data.email.toLowerCase(),
@@ -75,7 +79,7 @@ export const issueLicense = createServerFn({ method: "POST" })
       features: data.features?.length ? data.features : ["*"],
     };
     const bytes = new TextEncoder().encode(JSON.stringify(payload));
-    const sig = await sign(bytes, fromB64Url(priv));
+    const sig = await ed.sign(bytes, fromB64Url(priv));
     const licenseKey = `${toB64Url(bytes)}.${toB64Url(sig)}`;
     return { licenseKey, payload };
   });

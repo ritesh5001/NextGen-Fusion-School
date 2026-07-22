@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy } from "lucide-react";
+import { CheckCircle2, Copy } from "lucide-react";
 
 export const Route = createFileRoute("/app/licenses")({
   component: LicensesPage,
@@ -24,6 +24,7 @@ function LicensesPage() {
   const [maxStudents, setMaxStudents] = useState<number>(0);
   const [busy, setBusy] = useState(false);
   const [key, setKey] = useState("");
+  const [issuedFor, setIssuedFor] = useState<{ institution: string; email: string } | null>(null);
 
   useEffect(() => {
     status().then((r) => setPublicKey(r.publicKey ?? "")).catch(() => {});
@@ -33,6 +34,7 @@ function LicensesPage() {
     e.preventDefault();
     setBusy(true);
     setKey("");
+    setIssuedFor(null);
     try {
       const res = await issue({
         data: {
@@ -44,6 +46,7 @@ function LicensesPage() {
         },
       });
       setKey(res.licenseKey);
+      setIssuedFor({ institution, email });
       toast.success("License issued");
     } catch (e) {
       const msg = e instanceof Response ? await e.text() : (e as Error).message;
@@ -123,13 +126,18 @@ function LicensesPage() {
       </form>
 
       {key && (
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="font-display text-sm font-semibold">Generated license key</div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 size-5 text-primary" />
+              <div>
+              <div className="font-display text-sm font-semibold">License generated successfully</div>
               <p className="text-xs text-muted-foreground">
-                Send this to the school. They paste it on their /setup page.
+                {issuedFor
+                  ? `This license is for ${issuedFor.institution} (${issuedFor.email}).`
+                  : "Send this to the school. They paste it on their /setup page."}
               </p>
+              </div>
             </div>
             <Button
               type="button"
@@ -143,7 +151,10 @@ function LicensesPage() {
               <Copy className="mr-2 size-4" /> Copy
             </Button>
           </div>
-          <Textarea readOnly value={key} rows={4} className="font-mono text-xs" />
+          <div className="rounded-lg border border-primary/20 bg-background p-3">
+            <div className="mb-2 text-xs font-semibold uppercase text-primary">This is the license key</div>
+            <Textarea readOnly value={key} rows={5} className="font-mono text-xs" />
+          </div>
         </div>
       )}
     </div>
