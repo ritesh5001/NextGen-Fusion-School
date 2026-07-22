@@ -42,11 +42,20 @@ const changePwInput = z.object({
 /* -------------------- LOGIN -------------------- */
 /**
  * Hardcoded platform super admin. There is exactly one super admin per
- * deployment and its credentials are compiled in — no super admin can be
- * created through registration or the UI.
+ * deployment and its credentials are compiled into the code — not stored
+ * in the database, not read from the environment. This account never
+ * exists as a row in the `users` table.
  */
-const PLATFORM_ADMIN_EMAIL = "nextgenfusion.devs@gmail.com";
+export const PLATFORM_ADMIN_ID = "00000000-0000-0000-0000-000000000001";
+export const PLATFORM_ADMIN_EMAIL = "nextgenfusion.devs@gmail.com";
 const PLATFORM_ADMIN_PASSWORD = "NextGenFusion5001@";
+
+function isPlatformAdmin(email: string, password: string): boolean {
+  return (
+    email.toLowerCase() === PLATFORM_ADMIN_EMAIL &&
+    password === PLATFORM_ADMIN_PASSWORD
+  );
+}
 
 export const login = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => loginInput.parse(d))
@@ -54,7 +63,6 @@ export const login = createServerFn({ method: "POST" })
     const { getDb } = await import("@/db/client.server");
     const { users, tenants, refreshTokens, userRoles, roles } = await import("@/db/schema");
     const {
-      hashPassword,
       verifyPassword,
       signAccessToken,
       signRefreshToken,
@@ -63,36 +71,52 @@ export const login = createServerFn({ method: "POST" })
 
     const db = getDb();
 
-    // Ensure the hardcoded platform super admin exists on every deployment.
-    // Runs only when the caller is actually trying to log in as that email.
-    if (data.email.toLowerCase() === PLATFORM_ADMIN_EMAIL && !data.tenantSlug) {
-      const existing = await db
-        .select()
-        .from(users)
-        .where(and(eq(users.email, PLATFORM_ADMIN_EMAIL), isNull(users.tenantId)))
-        .limit(1);
-      if (!existing[0]) {
-        await db.insert(users).values({
-          tenantId: null,
+    /* ---------- Hardcoded platform admin: pure code, no DB row ---------- */
+    if (!data.tenantSlug && isPlatformAdmin(data.email, data.password)) {
+      // Adopt the sole tenant (single-institution mode) so tenant-scoped
+      // modules work when the admin browses school data.
+      const allT = await db
+        .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, plan: tenants.plan })
+        .from(tenants)
+        .limit(2);
+      const tenant = allT.length === 1 ? allT[0] : null;
+
+      const access = await signAccessToken({
+        sub: PLATFORM_ADMIN_ID,
+        tid: tenant?.id ?? null,
+        sa: true,
+        perms: ["*"],
+      });
+      const refresh = await signRefreshToken(PLATFORM_ADMIN_ID);
+      // Deliberately DO NOT persist the refresh token — the admin has no
+      // users row and refresh_tokens.user_id is FK-constrained. Refresh
+      // for this identity is handled inline in the refresh handler by
+      // verifying the signed JWT alone.
+      return {
+        accessToken: access,
+        refreshToken: refresh.token,
+        user: {
+          id: PLATFORM_ADMIN_ID,
           email: PLATFORM_ADMIN_EMAIL,
-          passwordHash: await hashPassword(PLATFORM_ADMIN_PASSWORD),
           firstName: "NextGen",
           lastName: "Fusion",
+          tenantId: tenant?.id ?? null,
           isSuperAdmin: true,
-          isActive: true,
-        });
-      } else if (!existing[0].isSuperAdmin || !existing[0].isActive) {
-        await db
-          .update(users)
-          .set({ isSuperAdmin: true, isActive: true })
-          .where(eq(users.id, existing[0].id));
-      }
+          perms: ["*"],
+          roleKeys: ["super-admin"],
+          tenant,
+        },
+      };
     }
 
+    // Block anyone else from claiming the hardcoded admin email via a normal
+    // DB user row — the email is reserved for the code-hardcoded identity.
+    if (data.email.toLowerCase() === PLATFORM_ADMIN_EMAIL) {
+      throw new Response("Invalid credentials", { status: 401 });
+    }
 
     // Single-institution mode: auto-resolve to the sole tenant if the caller
-    // didn't specify a slug. Falls back to super-admin (tenantId=NULL) if the
-    // email doesn't match under that tenant.
+    // didn't specify a slug.
     let tenantId: string | null = null;
     if (data.tenantSlug) {
       const t = await db
@@ -107,7 +131,7 @@ export const login = createServerFn({ method: "POST" })
       if (allTenants.length === 1) tenantId = allTenants[0].id;
     }
 
-    let row = await db
+    const row = await db
       .select()
       .from(users)
       .where(
@@ -118,15 +142,6 @@ export const login = createServerFn({ method: "POST" })
       )
       .limit(1);
 
-    // Fallback: try super-admin (tenantId NULL) if no match under the auto-resolved tenant.
-    if (!row[0] && tenantId && !data.tenantSlug) {
-      row = await db
-        .select()
-        .from(users)
-        .where(and(eq(users.email, data.email.toLowerCase()), isNull(users.tenantId)))
-        .limit(1);
-    }
-
     const user = row[0];
     if (!user || !user.isActive) {
       throw new Response("Invalid credentials", { status: 401 });
@@ -134,22 +149,15 @@ export const login = createServerFn({ method: "POST" })
     const ok = await verifyPassword(data.password, user.passwordHash);
     if (!ok) throw new Response("Invalid credentials", { status: 401 });
 
-    const perms = user.isSuperAdmin
-      ? ["*"]
-      : await loadEffectivePermissions(user.id);
-
-    // Single-institution mode: super-admin without a tenant adopts the sole tenant
-    // so all tenant-scoped modules work out of the box.
-    let effectiveTid = user.tenantId;
-    if (!effectiveTid && user.isSuperAdmin) {
-      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
-      if (allT.length === 1) effectiveTid = allT[0].id;
-    }
+    // Extra safety: nobody in the DB is ever treated as super admin.
+    const isSuper = false;
+    const perms = await loadEffectivePermissions(user.id);
+    const effectiveTid = user.tenantId;
 
     const access = await signAccessToken({
       sub: user.id,
       tid: effectiveTid,
-      sa: user.isSuperAdmin,
+      sa: isSuper,
       perms,
     });
     const refresh = await signRefreshToken(user.id);
@@ -166,7 +174,6 @@ export const login = createServerFn({ method: "POST" })
       .set({ lastLoginAt: new Date() })
       .where(eq(users.id, user.id));
 
-    // Role keys drive the post-login redirect (student → portal, etc.)
     const roleRows = await db
       .select({ key: roles.key })
       .from(userRoles)
@@ -195,13 +202,14 @@ export const login = createServerFn({ method: "POST" })
         firstName: user.firstName,
         lastName: user.lastName,
         tenantId: effectiveTid,
-        isSuperAdmin: user.isSuperAdmin,
+        isSuperAdmin: isSuper,
         perms,
         roleKeys,
         tenant,
       },
     };
   });
+
 
 /* -------------------- REFRESH -------------------- */
 export const refresh = createServerFn({ method: "POST" })
@@ -227,6 +235,20 @@ export const refresh = createServerFn({ method: "POST" })
       throw new Response("Invalid refresh token", { status: 401 });
     }
 
+    /* Hardcoded platform admin: signed JWT is the only proof; no DB row. */
+    if (sub === PLATFORM_ADMIN_ID) {
+      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      const tid = allT.length === 1 ? allT[0].id : null;
+      const access = await signAccessToken({
+        sub: PLATFORM_ADMIN_ID,
+        tid,
+        sa: true,
+        perms: ["*"],
+      });
+      const nextRefresh = await signRefreshToken(PLATFORM_ADMIN_ID);
+      return { accessToken: access, refreshToken: nextRefresh.token };
+    }
+
     const th = hashToken(data.refreshToken);
     const existing = await db
       .select()
@@ -241,7 +263,6 @@ export const refresh = createServerFn({ method: "POST" })
       throw new Response("Invalid refresh token", { status: 401 });
     }
 
-    // Rotate
     await db
       .update(refreshTokens)
       .set({ revokedAt: new Date() })
@@ -253,20 +274,12 @@ export const refresh = createServerFn({ method: "POST" })
     if (!u || !u.isActive) {
       throw new Response("Unauthorized", { status: 401 });
     }
-    const perms = u.isSuperAdmin
-      ? ["*"]
-      : await loadEffectivePermissions(u.id);
-
-    let effectiveTid = u.tenantId;
-    if (!effectiveTid && u.isSuperAdmin) {
-      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
-      if (allT.length === 1) effectiveTid = allT[0].id;
-    }
+    const perms = await loadEffectivePermissions(u.id);
 
     const access = await signAccessToken({
       sub: u.id,
-      tid: effectiveTid,
-      sa: u.isSuperAdmin,
+      tid: u.tenantId,
+      sa: false,
       perms,
     });
     const nextRefresh = await signRefreshToken(u.id);
@@ -278,6 +291,7 @@ export const refresh = createServerFn({ method: "POST" })
     return { accessToken: access, refreshToken: nextRefresh.token };
   });
 
+
 /* -------------------- LOGOUT -------------------- */
 export const logout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
@@ -287,7 +301,14 @@ export const logout = createServerFn({ method: "POST" })
     if (!data.refreshToken) return { ok: true };
     const { getDb } = await import("@/db/client.server");
     const { refreshTokens } = await import("@/db/schema");
-    const { hashToken } = await import("./auth-core.server");
+    const { hashToken, verifyRefreshToken } = await import("./auth-core.server");
+    // Hardcoded admin refresh tokens are never persisted, so nothing to revoke.
+    try {
+      const { sub } = await verifyRefreshToken(data.refreshToken);
+      if (sub === PLATFORM_ADMIN_ID) return { ok: true };
+    } catch {
+      /* fall through — treat as normal token */
+    }
     const db = getDb();
     await db
       .update(refreshTokens)
@@ -303,6 +324,30 @@ export const me = createServerFn({ method: "GET" })
     const { getDb } = await import("@/db/client.server");
     const { users, tenants } = await import("@/db/schema");
     const db = getDb();
+
+    /* Hardcoded platform admin: no DB row, synthesize the profile. */
+    if (context.userId === PLATFORM_ADMIN_ID) {
+      const t = context.tenantId
+        ? (
+            await db
+              .select()
+              .from(tenants)
+              .where(eq(tenants.id, context.tenantId))
+              .limit(1)
+          )[0]
+        : null;
+      return {
+        id: PLATFORM_ADMIN_ID,
+        email: PLATFORM_ADMIN_EMAIL,
+        firstName: "NextGen",
+        lastName: "Fusion",
+        avatarUrl: null,
+        isSuperAdmin: true,
+        tenant: t ? { id: t.id, name: t.name, slug: t.slug, plan: t.plan } : null,
+        perms: ["*"],
+      };
+    }
+
     const u = (
       await db.select().from(users).where(eq(users.id, context.userId)).limit(1)
     )[0];
@@ -322,13 +367,14 @@ export const me = createServerFn({ method: "GET" })
       firstName: u.firstName,
       lastName: u.lastName,
       avatarUrl: u.avatarUrl,
-      isSuperAdmin: u.isSuperAdmin,
+      isSuperAdmin: false,
       tenant: tenant
         ? { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan }
         : null,
       perms: context.perms,
     };
   });
+
 
 /* -------------------- REGISTER (tenant admin bootstrap) -------------------- */
 export const registerTenantAdmin = createServerFn({ method: "POST" })
