@@ -129,11 +129,17 @@ function SchoolSite() {
             <a href="#faq" className="hover:text-primary">FAQ</a>
             <a href="#contact" className="hover:text-primary">Contact</a>
           </nav>
-          <Button asChild size="sm" style={{ background: accent }}>
-            <Link to="/apply/$slug" params={{ slug }}>
-              Apply
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link to="/auth/login">Login</Link>
+            </Button>
+            <Button asChild size="sm" style={{ background: accent }}>
+              <Link to="/apply/$slug" params={{ slug }}>
+                Apply
+              </Link>
+            </Button>
+          </div>
+
         </div>
       </header>
 
