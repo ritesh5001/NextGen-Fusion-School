@@ -206,7 +206,7 @@ function AppLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
-          {nav.map((group) => (
+          {(user.isSuperAdmin ? superAdminNav : nav).map((group) => (
             <div key={group.label} className="mb-4">
               <div className="mb-1 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-sidebar-muted">
                 {group.label}
