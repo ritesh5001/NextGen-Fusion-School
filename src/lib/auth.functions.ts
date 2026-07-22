@@ -235,6 +235,20 @@ export const refresh = createServerFn({ method: "POST" })
       throw new Response("Invalid refresh token", { status: 401 });
     }
 
+    /* Hardcoded platform admin: signed JWT is the only proof; no DB row. */
+    if (sub === PLATFORM_ADMIN_ID) {
+      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      const tid = allT.length === 1 ? allT[0].id : null;
+      const access = await signAccessToken({
+        sub: PLATFORM_ADMIN_ID,
+        tid,
+        sa: true,
+        perms: ["*"],
+      });
+      const nextRefresh = await signRefreshToken(PLATFORM_ADMIN_ID);
+      return { accessToken: access, refreshToken: nextRefresh.token };
+    }
+
     const th = hashToken(data.refreshToken);
     const existing = await db
       .select()
@@ -249,7 +263,6 @@ export const refresh = createServerFn({ method: "POST" })
       throw new Response("Invalid refresh token", { status: 401 });
     }
 
-    // Rotate
     await db
       .update(refreshTokens)
       .set({ revokedAt: new Date() })
@@ -261,20 +274,12 @@ export const refresh = createServerFn({ method: "POST" })
     if (!u || !u.isActive) {
       throw new Response("Unauthorized", { status: 401 });
     }
-    const perms = u.isSuperAdmin
-      ? ["*"]
-      : await loadEffectivePermissions(u.id);
-
-    let effectiveTid = u.tenantId;
-    if (!effectiveTid && u.isSuperAdmin) {
-      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
-      if (allT.length === 1) effectiveTid = allT[0].id;
-    }
+    const perms = await loadEffectivePermissions(u.id);
 
     const access = await signAccessToken({
       sub: u.id,
-      tid: effectiveTid,
-      sa: u.isSuperAdmin,
+      tid: u.tenantId,
+      sa: false,
       perms,
     });
     const nextRefresh = await signRefreshToken(u.id);
@@ -285,6 +290,7 @@ export const refresh = createServerFn({ method: "POST" })
     });
     return { accessToken: access, refreshToken: nextRefresh.token };
   });
+
 
 /* -------------------- LOGOUT -------------------- */
 export const logout = createServerFn({ method: "POST" })
