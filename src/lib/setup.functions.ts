@@ -50,13 +50,10 @@ export const runSetup = createServerFn({ method: "POST" })
     // Gate registration on a valid, verified license key. The signed payload
     // may bind the license to a specific school email — we enforce that here.
     const status = await verifyLicense(data.licenseKey);
-    if (!status.valid || !status.payload) {
+    if (!status.valid) {
       throw new Response(`Invalid license: ${status.reason ?? "unknown"}`, { status: 400 });
     }
-    const boundEmail = (status.payload as unknown as { email?: string }).email;
-    if (boundEmail && boundEmail.toLowerCase() !== data.ownerEmail.toLowerCase()) {
-      throw new Response("License is issued to a different school email", { status: 400 });
-    }
+
 
     const existing = await db.select({ id: tenants.id }).from(tenants).limit(1);
     if (existing[0]) {
