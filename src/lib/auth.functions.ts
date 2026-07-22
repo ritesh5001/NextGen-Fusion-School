@@ -174,7 +174,7 @@ export const refresh = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
-    const { refreshTokens, users } = await import("@/db/schema");
+    const { refreshTokens, users, tenants } = await import("@/db/schema");
     const {
       verifyRefreshToken,
       hashToken,
