@@ -120,7 +120,7 @@ function LicensesPage() {
           </div>
         </div>
 
-        <Button type="submit" disabled={busy || (hasKeys && !hasKeys.hasPrivateKey)}>
+        <Button type="submit" disabled={busy || !!(hasKeys && !hasKeys.hasPrivateKey)}>
           {busy ? "Signing…" : "Generate license key"}
         </Button>
       </form>
