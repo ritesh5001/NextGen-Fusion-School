@@ -60,6 +60,17 @@ export const tenants = pgTable(
 );
 
 /* ============================================================
+ * Platform signing keypair (single row, vendor-only)
+ * Used to sign license keys directly from the admin panel.
+ * ============================================================ */
+export const platformKeys = pgTable("platform_keys", {
+  id: integer("id").primaryKey().default(1),
+  privateKey: text("private_key").notNull(),
+  publicKey: text("public_key").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/* ============================================================
  * Academic years (scoped per tenant, one active at a time)
  * ============================================================ */
 export const academicYears = pgTable(
