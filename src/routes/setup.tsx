@@ -68,6 +68,7 @@ function SetupPage() {
           ownerPassword: pwd,
           ownerFirstName: first,
           ownerLastName: last || undefined,
+          licenseKey: licenseKey.trim(),
         },
       });
       // Auto-sign the owner in and take them to the dashboard.
