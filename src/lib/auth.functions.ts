@@ -102,9 +102,17 @@ export const login = createServerFn({ method: "POST" })
       ? ["*"]
       : await loadEffectivePermissions(user.id);
 
+    // Single-institution mode: super-admin without a tenant adopts the sole tenant
+    // so all tenant-scoped modules work out of the box.
+    let effectiveTid = user.tenantId;
+    if (!effectiveTid && user.isSuperAdmin) {
+      const allT = await db.select({ id: tenants.id }).from(tenants).limit(2);
+      if (allT.length === 1) effectiveTid = allT[0].id;
+    }
+
     const access = await signAccessToken({
       sub: user.id,
-      tid: user.tenantId,
+      tid: effectiveTid,
       sa: user.isSuperAdmin,
       perms,
     });
