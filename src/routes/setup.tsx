@@ -170,9 +170,11 @@ function SetupPage() {
                 required
               />
               <p className="text-[11px] text-muted-foreground">Minimum 8 characters.</p>
+            </div>
           </div>
 
           <div className="border-t border-border pt-5">
+
             <h2 className="font-display text-lg font-semibold tracking-tight">License key</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               Paste the license key issued by NextGen Fusion for this school. Registration is gated on a valid, verified key.
