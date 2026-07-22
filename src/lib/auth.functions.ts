@@ -139,12 +139,12 @@ export const login = createServerFn({ method: "POST" })
     const roleKeys = roleRows.map((r) => r.key);
 
     let tenant: { id: string; name: string; slug: string; plan: string } | null = null;
-    if (user.tenantId) {
+    if (effectiveTid) {
       const tRow = (
         await db
           .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, plan: tenants.plan })
           .from(tenants)
-          .where(eq(tenants.id, user.tenantId))
+          .where(eq(tenants.id, effectiveTid))
           .limit(1)
       )[0];
       if (tRow) tenant = tRow;
@@ -158,7 +158,7 @@ export const login = createServerFn({ method: "POST" })
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        tenantId: user.tenantId,
+        tenantId: effectiveTid,
         isSuperAdmin: user.isSuperAdmin,
         perms,
         roleKeys,
