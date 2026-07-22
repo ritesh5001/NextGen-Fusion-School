@@ -1,12 +1,9 @@
 /**
- * Vendor-side license issuance. Signs a license payload with the
- * `LICENSE_PRIVATE_KEY` environment variable (base64url ed25519 secret) so
- * the platform super-admin can generate keys for schools directly from the
- * admin panel — no shell access required.
- *
- * The generated key can be pasted into the school's own deployment on the
- * /setup page (their deployment holds only LICENSE_PUBLIC_KEY and verifies
- * offline).
+ * Vendor-side license issuance. Signs a license payload with an ed25519
+ * private key. On first use, if `LICENSE_PRIVATE_KEY` is not set in the
+ * environment, a fresh keypair is auto-generated and persisted in the
+ * `platform_keys` table so the platform admin can issue keys directly from
+ * the dashboard with zero shell/env setup.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -26,10 +23,36 @@ function fromB64Url(s: string): Uint8Array {
   return new Uint8Array(Buffer.from(s + "=".repeat(pad), "base64"));
 }
 
+/**
+ * Resolve or lazily create the vendor signing keypair.
+ * Priority: env vars → DB row → generate + persist.
+ */
+async function loadOrCreateKeys(): Promise<{ priv: string; pub: string }> {
+  const envPriv = process.env.LICENSE_PRIVATE_KEY;
+  const envPub = process.env.LICENSE_PUBLIC_KEY;
+  if (envPriv && envPub) return { priv: envPriv, pub: envPub };
+
+  const { getDb } = await import("@/db/client.server");
+  const { platformKeys } = await import("@/db/schema");
+  const db = getDb();
+  const existing = await db.select().from(platformKeys).limit(1);
+  if (existing[0]) {
+    return { priv: existing[0].privateKey, pub: existing[0].publicKey };
+  }
+
+  const { getPublicKey, utils } = await import("@noble/ed25519");
+  const privBytes = utils.randomSecretKey();
+  const pubBytes = await getPublicKey(privBytes);
+  const priv = toB64Url(privBytes);
+  const pub = toB64Url(pubBytes);
+  await db.insert(platformKeys).values({ id: 1, privateKey: priv, publicKey: pub });
+  return { priv, pub };
+}
+
 const issueInput = z.object({
   institution: z.string().min(2),
   email: z.string().email(),
-  expiresAt: z.string().optional().nullable(), // ISO date, null = perpetual
+  expiresAt: z.string().optional().nullable(),
   maxStudents: z.number().int().min(0).default(0),
   features: z.array(z.string()).default(["*"]),
 });
@@ -41,13 +64,7 @@ export const issueLicense = createServerFn({ method: "POST" })
     if (!context.isSuperAdmin) {
       throw new Response("Forbidden", { status: 403 });
     }
-    const priv = process.env.LICENSE_PRIVATE_KEY;
-    if (!priv) {
-      throw new Response(
-        "LICENSE_PRIVATE_KEY is not configured on the server. Add it in Secrets and redeploy.",
-        { status: 500 },
-      );
-    }
+    const { priv } = await loadOrCreateKeys();
     const { sign } = await import("@noble/ed25519");
     const payload = {
       institution: data.institution,
@@ -63,13 +80,15 @@ export const issueLicense = createServerFn({ method: "POST" })
     return { licenseKey, payload };
   });
 
-/** Non-secret status check so the UI can nudge to configure keys. */
+/** Status check + returns the public key so admin can copy it to schools. */
 export const getIssuerStatus = createServerFn({ method: "GET" })
   .middleware([requireAuth])
   .handler(async ({ context }) => {
     if (!context.isSuperAdmin) throw new Response("Forbidden", { status: 403 });
+    const { pub } = await loadOrCreateKeys();
     return {
-      hasPrivateKey: !!process.env.LICENSE_PRIVATE_KEY,
-      hasPublicKey: !!process.env.LICENSE_PUBLIC_KEY,
+      hasPrivateKey: true,
+      hasPublicKey: true,
+      publicKey: pub,
     };
   });

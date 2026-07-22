@@ -17,9 +17,7 @@ export const Route = createFileRoute("/app/licenses")({
 function LicensesPage() {
   const issue = useServerFn(issueLicense);
   const status = useServerFn(getIssuerStatus);
-  const [hasKeys, setHasKeys] = useState<null | { hasPrivateKey: boolean; hasPublicKey: boolean }>(
-    null,
-  );
+  const [publicKey, setPublicKey] = useState<string>("");
   const [institution, setInstitution] = useState("");
   const [email, setEmail] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
@@ -28,7 +26,7 @@ function LicensesPage() {
   const [key, setKey] = useState("");
 
   useEffect(() => {
-    status().then(setHasKeys).catch(() => setHasKeys({ hasPrivateKey: false, hasPublicKey: false }));
+    status().then((r) => setPublicKey(r.publicKey ?? "")).catch(() => {});
   }, [status]);
 
   async function onIssue(e: React.FormEvent) {
@@ -62,16 +60,15 @@ function LicensesPage() {
         description="Generate signed license keys for schools. Each key is bound to the school's owner email — registration on their deployment is gated on this key."
       />
 
-
-      {hasKeys && !hasKeys.hasPrivateKey && (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
-          <div className="font-medium text-destructive">Signing key not configured</div>
-          <p className="mt-1 text-muted-foreground">
-            Add <code className="text-xs">LICENSE_PRIVATE_KEY</code> and{" "}
-            <code className="text-xs">LICENSE_PUBLIC_KEY</code> as environment secrets on this
-            deployment, then reload. Only this vendor deployment needs the private key — schools
-            only need the public key to verify.
+      {publicKey && (
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-2">
+          <div className="font-display text-sm font-semibold">Vendor public key</div>
+          <p className="text-xs text-muted-foreground">
+            This is auto-generated and stored on this deployment. Schools set it as{" "}
+            <code className="text-xs">LICENSE_PUBLIC_KEY</code> to verify keys you issue —
+            or leave blank and they'll pull it via the license itself.
           </p>
+          <Textarea readOnly value={publicKey} rows={2} className="font-mono text-xs" />
         </div>
       )}
 
