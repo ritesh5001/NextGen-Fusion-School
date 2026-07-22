@@ -71,6 +71,7 @@ export const runSetup = createServerFn({ method: "POST" })
         name: data.schoolName,
         plan: "premium", // single-tenant licensed deployment = all features
         subscriptionStatus: "active",
+        licenseKey: data.licenseKey,
       })
       .returning({ id: tenants.id, slug: tenants.slug, name: tenants.name });
 
