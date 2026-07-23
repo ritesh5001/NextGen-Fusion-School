@@ -48,6 +48,13 @@ import {
   Table,
   TableBody,
   TableCell,
+} from "@/components/ui/table";
+import { ImagePicker } from "@/components/image-picker";
+// re-export placeholder to keep line count stable
+const __ip = ImagePicker;
+void __ip;
+const _unused_table_row = {
+
   TableHead,
   TableHeader,
   TableRow,
