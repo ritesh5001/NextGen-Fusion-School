@@ -34,6 +34,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Plus, Trash2, Pencil, Printer, IdCard } from "lucide-react";
+import { ImagePicker } from "@/components/image-picker";
+
 
 export const Route = createFileRoute("/app/id-cards")({
   component: IdCardsPage,
@@ -482,14 +484,15 @@ function IdCardsPage() {
               />
             </div>
             <div className="col-span-2">
-              <Label>Logo URL</Label>
-              <Input
-                value={edit?.logoUrl ?? ""}
-                onChange={(e) =>
-                  setEdit({ ...edit, logoUrl: e.target.value })
-                }
+              <Label>Logo</Label>
+              <ImagePicker
+                value={edit?.logoUrl}
+                onChange={(url) => setEdit({ ...edit, logoUrl: url })}
+                folder="idcards"
+                aspect="square"
               />
             </div>
+
             <div className="col-span-2">
               <Label>Footer text</Label>
               <Input
