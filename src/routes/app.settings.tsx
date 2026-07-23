@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ImagePicker } from "@/components/image-picker";
+
 
 
 export const Route = createFileRoute("/app/settings")({
@@ -404,6 +406,10 @@ function ReportForm({
   }) => Promise<void>;
   busy: boolean;
 }) {
+  const [logoUrl, setLogoUrl] = useState<string>(initial?.reportLogoUrl ?? "");
+  const [signatureUrl, setSignatureUrl] = useState<string>(
+    initial?.reportSignatureUrl ?? "",
+  );
   return (
     <form
       onSubmit={async (e) => {
@@ -412,8 +418,8 @@ function ReportForm({
         await onSubmit({
           reportHeader: String(fd.get("reportHeader") ?? "") || null,
           reportFooter: String(fd.get("reportFooter") ?? "") || null,
-          reportLogoUrl: String(fd.get("reportLogoUrl") ?? "") || null,
-          reportSignatureUrl: String(fd.get("reportSignatureUrl") ?? "") || null,
+          reportLogoUrl: logoUrl || null,
+          reportSignatureUrl: signatureUrl || null,
           reportPrincipalName:
             String(fd.get("reportPrincipalName") ?? "") || null,
         });
@@ -446,23 +452,24 @@ function ReportForm({
             />
           </div>
           <div>
-            <Label htmlFor="reportLogoUrl">Logo URL</Label>
-            <Input
-              id="reportLogoUrl"
-              name="reportLogoUrl"
-              type="url"
-              defaultValue={initial?.reportLogoUrl ?? ""}
+            <Label>Logo</Label>
+            <ImagePicker
+              value={logoUrl}
+              onChange={setLogoUrl}
+              folder="reports"
+              aspect="square"
             />
           </div>
           <div>
-            <Label htmlFor="reportSignatureUrl">Principal signature URL</Label>
-            <Input
-              id="reportSignatureUrl"
-              name="reportSignatureUrl"
-              type="url"
-              defaultValue={initial?.reportSignatureUrl ?? ""}
+            <Label>Principal signature</Label>
+            <ImagePicker
+              value={signatureUrl}
+              onChange={setSignatureUrl}
+              folder="reports"
+              aspect="wide"
             />
           </div>
+
           <div className="col-span-2">
             <Label htmlFor="reportPrincipalName">Principal name</Label>
             <Input
