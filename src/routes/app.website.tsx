@@ -245,12 +245,15 @@ function BrandingPanel() {
             placeholder="Nurturing curious minds since 1974"
           />
         </Field>
-        <Field label="Hero background image URL" full>
-          <Input
-            value={meta.heroImageUrl ?? ""}
-            onChange={(e) => set("heroImageUrl", e.target.value)}
+        <Field label="Hero background image" full>
+          <ImagePicker
+            value={meta.heroImageUrl}
+            onChange={(url) => set("heroImageUrl", url)}
+            folder="hero"
+            aspect="wide"
           />
         </Field>
+
       </Section>
 
       <Section title="About the school">
@@ -348,18 +351,23 @@ function BrandingPanel() {
       </Section>
 
       <Section title="Assets & footer">
-        <Field label="Logo URL">
-          <Input
-            value={meta.logoUrl ?? ""}
-            onChange={(e) => set("logoUrl", e.target.value)}
+        <Field label="Logo">
+          <ImagePicker
+            value={meta.logoUrl}
+            onChange={(url) => set("logoUrl", url)}
+            folder="branding"
+            aspect="square"
           />
         </Field>
-        <Field label="Favicon URL">
-          <Input
-            value={meta.faviconUrl ?? ""}
-            onChange={(e) => set("faviconUrl", e.target.value)}
+        <Field label="Favicon">
+          <ImagePicker
+            value={meta.faviconUrl}
+            onChange={(url) => set("faviconUrl", url)}
+            folder="branding"
+            aspect="square"
           />
         </Field>
+
         <Field label="Footer text" full>
           <Input
             value={meta.footerText ?? ""}
@@ -569,14 +577,15 @@ function SliderPanel() {
               />
             </div>
             <div>
-              <Label>Image URL</Label>
-              <Input
-                value={edit?.imageUrl ?? ""}
-                onChange={(e) =>
-                  setEdit({ ...edit, imageUrl: e.target.value })
-                }
+              <Label>Image</Label>
+              <ImagePicker
+                value={edit?.imageUrl}
+                onChange={(url) => setEdit({ ...edit, imageUrl: url })}
+                folder="sliders"
+                aspect="wide"
               />
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>CTA label</Label>
@@ -773,14 +782,15 @@ function TestimonialPanel() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Avatar URL</Label>
-                <Input
-                  value={edit?.avatarUrl ?? ""}
-                  onChange={(e) =>
-                    setEdit({ ...edit, avatarUrl: e.target.value })
-                  }
+                <Label>Avatar</Label>
+                <ImagePicker
+                  value={edit?.avatarUrl}
+                  onChange={(url) => setEdit({ ...edit, avatarUrl: url })}
+                  folder="testimonials"
+                  aspect="square"
                 />
               </div>
+
               <div>
                 <Label>Rating (1-5)</Label>
                 <Input
@@ -926,14 +936,15 @@ function GalleryPanel() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Image URL</Label>
-              <Input
-                value={edit?.imageUrl ?? ""}
-                onChange={(e) =>
-                  setEdit({ ...edit, imageUrl: e.target.value })
-                }
+              <Label>Image</Label>
+              <ImagePicker
+                value={edit?.imageUrl}
+                onChange={(url) => setEdit({ ...edit, imageUrl: url })}
+                folder="gallery"
+                aspect="wide"
               />
             </div>
+
             <div>
               <Label>Title</Label>
               <Input
