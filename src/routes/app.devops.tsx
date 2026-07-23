@@ -49,6 +49,31 @@ export const Route = createFileRoute("/app/devops")({
 type Health = Awaited<ReturnType<typeof getSystemHealth>>;
 type LogRow = Awaited<ReturnType<typeof listSystemLogs>>[number];
 
+type IntegrityCheck = { name: string; ok: boolean; detail: string };
+
+function isResponseLike(value: unknown): value is Response {
+  return value instanceof Response;
+}
+
+function isHealthPayload(value: unknown): value is Health {
+  return !!value && typeof value === "object" && "db" in value && "counts" in value && "server" in value;
+}
+
+function normalizeLogRows(value: unknown): LogRow[] {
+  if (Array.isArray(value)) return value as LogRow[];
+  if (value && typeof value === "object" && "rows" in value && Array.isArray((value as { rows?: unknown }).rows)) {
+    return (value as { rows: LogRow[] }).rows;
+  }
+  return [];
+}
+
+function normalizeIntegrityChecks(value: unknown): IntegrityCheck[] {
+  if (value && typeof value === "object" && "checks" in value && Array.isArray((value as { checks?: unknown }).checks)) {
+    return (value as { checks: IntegrityCheck[] }).checks;
+  }
+  return [];
+}
+
 function DevOpsPage() {
   const health = useServerFn(getSystemHealth);
   const logs = useServerFn(listSystemLogs);
@@ -67,18 +92,32 @@ function DevOpsPage() {
 
   async function refreshHealth() {
     try {
-      setH((await health()) as Health);
+      const result = await health();
+      if (isResponseLike(result)) {
+        throw new Error(result.statusText || "Unable to load system health");
+      }
+      if (!isHealthPayload(result)) {
+        setH(null);
+        return;
+      }
+      setH(result);
     } catch (e) {
+      setH(null);
       toast.error((e as Error).message);
     }
   }
+
   async function refreshLogs() {
     try {
-      const r = (await logs({
+      const result = await logs({
         data: { level, sinceHours, limit: 200 },
-      })) as LogRow[];
-      setRows(r);
+      });
+      if (isResponseLike(result)) {
+        throw new Error(result.statusText || "Unable to load log entries");
+      }
+      setRows(normalizeLogRows(result));
     } catch (e) {
+      setRows([]);
       toast.error((e as Error).message);
     }
   }
@@ -161,8 +200,14 @@ function DevOpsPage() {
               setBusy(true);
               try {
                 const r = await clear();
+                if (isResponseLike(r)) {
+                  throw new Error(r.statusText || "Unable to clear cache");
+                }
+                if (!r || typeof r !== "object" || !("clearedAt" in r)) {
+                  throw new Error("Unexpected cache clear response");
+                }
                 toast.success(
-                  `Cache cleared at ${new Date(r.clearedAt).toLocaleTimeString()}`,
+                  `Cache cleared at ${new Date((r as { clearedAt: string }).clearedAt).toLocaleTimeString()}`,
                 );
                 await refreshLogs();
               } catch (e) {
@@ -183,8 +228,12 @@ function DevOpsPage() {
               setBusy(true);
               try {
                 const r = await integrity();
-                setIntegrityResult(r.checks);
-                const bad = r.checks.filter((c) => !c.ok).length;
+                if (isResponseLike(r)) {
+                  throw new Error(r.statusText || "Unable to run integrity check");
+                }
+                const checks = normalizeIntegrityChecks(r);
+                setIntegrityResult(checks);
+                const bad = checks.filter((c) => !c.ok).length;
                 if (bad === 0) toast.success("All checks passed");
                 else toast.warning(`${bad} check(s) reported issues`);
                 await refreshLogs();
