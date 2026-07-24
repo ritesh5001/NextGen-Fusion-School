@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requirePlan } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -111,7 +111,7 @@ export const submitAdmission = createServerFn({ method: "POST" })
 
 /* ============= ADMIN ============= */
 export const listApplications = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -164,7 +164,7 @@ export const listApplications = createServerFn({ method: "GET" })
   });
 
 export const updateApplicationStatus = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -202,7 +202,7 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
   });
 
 export const enrollApplication = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -267,7 +267,7 @@ export const enrollApplication = createServerFn({ method: "POST" })
   });
 
 export const deleteApplication = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

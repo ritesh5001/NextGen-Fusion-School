@@ -1,18 +1,4 @@
-/**
- * Seeded license keys for NextGen Fusion School.
- *
- * 30 pre-issued keys, split across three tiers (10 each):
- *   - Starter (NGFS-STR-…) → core school management
- *   - Pro     (NGFS-PRO-…) → Starter + academics, finance & operations
- *   - Max     (NGFS-MAX-…) → the full institute suite
- *
- * A single key MAY be handed to more than one school and reused across
- * deployments — verification is simply membership in this list, and the tier
- * on the matched key decides how much of the product that school unlocks
- * (see `plans.ts`). Editing a key's `label`/`notes` keeps track of who each
- * key was issued to. Order and index are stable so the admin panel can
- * reference them by number.
- */
+
 import type { PlanTier } from "./plans";
 
 export interface SeededLicense {

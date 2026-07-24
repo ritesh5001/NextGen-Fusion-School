@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requirePlan } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 
 /* ================== EMPLOYEES ================== */
 export const listEmployees = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({ q: z.string().optional(), activeOnly: z.boolean().optional() })
@@ -59,7 +59,7 @@ const employeeUpsert = z.object({
 });
 
 export const saveEmployee = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => employeeUpsert.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -99,7 +99,7 @@ export const saveEmployee = createServerFn({ method: "POST" })
   });
 
 export const deleteEmployee = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -114,7 +114,7 @@ export const deleteEmployee = createServerFn({ method: "POST" })
 
 /* ================== LEAVE TYPES ================== */
 export const listLeaveTypes = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -128,7 +128,7 @@ export const listLeaveTypes = createServerFn({ method: "GET" })
   });
 
 export const saveLeaveType = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -169,7 +169,7 @@ export const saveLeaveType = createServerFn({ method: "POST" })
   });
 
 export const deleteLeaveType = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -184,7 +184,7 @@ export const deleteLeaveType = createServerFn({ method: "POST" })
 
 /* ================== LEAVE REQUESTS ================== */
 export const listLeaveRequests = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -230,7 +230,7 @@ export const listLeaveRequests = createServerFn({ method: "GET" })
   });
 
 export const saveLeaveRequest = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -275,7 +275,7 @@ export const saveLeaveRequest = createServerFn({ method: "POST" })
   });
 
 export const decideLeaveRequest = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -304,7 +304,7 @@ export const decideLeaveRequest = createServerFn({ method: "POST" })
   });
 
 export const deleteLeaveRequest = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -321,7 +321,7 @@ export const deleteLeaveRequest = createServerFn({ method: "POST" })
 
 /* ================== HR POLICIES ================== */
 export const listPolicies = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -335,7 +335,7 @@ export const listPolicies = createServerFn({ method: "GET" })
   });
 
 export const savePolicy = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -374,7 +374,7 @@ export const savePolicy = createServerFn({ method: "POST" })
   });
 
 export const deletePolicy = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -389,7 +389,7 @@ export const deletePolicy = createServerFn({ method: "POST" })
 
 /* ================== WORK OUTSIDE ================== */
 export const listWorkOutside = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -429,7 +429,7 @@ export const listWorkOutside = createServerFn({ method: "GET" })
   });
 
 export const saveWorkOutside = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -477,7 +477,7 @@ export const saveWorkOutside = createServerFn({ method: "POST" })
   });
 
 export const deleteWorkOutside = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

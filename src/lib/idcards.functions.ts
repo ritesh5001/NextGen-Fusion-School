@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, inArray } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requirePlan } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -13,7 +13,7 @@ function tenantOf(context: { tenantId: string | null }) {
 }
 
 export const listIdTemplates = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -44,7 +44,7 @@ const tplUpsert = z.object({
 });
 
 export const saveIdTemplate = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) => tplUpsert.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -94,7 +94,7 @@ export const saveIdTemplate = createServerFn({ method: "POST" })
   });
 
 export const deleteIdTemplate = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -110,7 +110,7 @@ export const deleteIdTemplate = createServerFn({ method: "POST" })
   });
 
 export const getIdCardBatch = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z
       .object({

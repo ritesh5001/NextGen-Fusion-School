@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requirePlan } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 
 /* ================== COMPONENTS ================== */
 export const listComponents = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -28,7 +28,7 @@ export const listComponents = createServerFn({ method: "GET" })
   });
 
 export const saveComponent = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -76,7 +76,7 @@ export const saveComponent = createServerFn({ method: "POST" })
   });
 
 export const deleteComponent = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -96,7 +96,7 @@ export const deleteComponent = createServerFn({ method: "POST" })
 
 /* ================== TEMPLATES ================== */
 export const listTemplates = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -138,7 +138,7 @@ export const listTemplates = createServerFn({ method: "GET" })
   });
 
 export const saveTemplate = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -207,7 +207,7 @@ export const saveTemplate = createServerFn({ method: "POST" })
   });
 
 export const deleteTemplate = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -227,7 +227,7 @@ export const deleteTemplate = createServerFn({ method: "POST" })
 
 /* ================== ASSIGNMENTS ================== */
 export const listAssignments = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -260,7 +260,7 @@ export const listAssignments = createServerFn({ method: "GET" })
   });
 
 export const saveAssignment = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -324,7 +324,7 @@ export const saveAssignment = createServerFn({ method: "POST" })
   });
 
 export const deleteAssignment = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -344,7 +344,7 @@ export const deleteAssignment = createServerFn({ method: "POST" })
 
 /* ================== PAYSLIPS ================== */
 export const listPayslips = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -389,7 +389,7 @@ export const listPayslips = createServerFn({ method: "GET" })
   });
 
 export const getPayslip = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -430,7 +430,7 @@ export const getPayslip = createServerFn({ method: "GET" })
   });
 
 export const generatePayslips = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -573,7 +573,7 @@ export const generatePayslips = createServerFn({ method: "POST" })
   });
 
 export const finalizePayslip = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -589,7 +589,7 @@ export const finalizePayslip = createServerFn({ method: "POST" })
   });
 
 export const payPayslip = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -620,7 +620,7 @@ export const payPayslip = createServerFn({ method: "POST" })
   });
 
 export const deletePayslip = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("max")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

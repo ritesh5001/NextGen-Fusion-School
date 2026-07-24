@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, asc, desc } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requirePlan } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -15,7 +15,7 @@ function tenantOf(context: { tenantId: string | null }) {
 /* ================== EXAMS ================== */
 
 export const listExams = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -51,7 +51,7 @@ const upsertExamInput = z.object({
 });
 
 export const saveExam = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) => upsertExamInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -89,7 +89,7 @@ export const saveExam = createServerFn({ method: "POST" })
   });
 
 export const setExamPublished = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z
       .object({ id: z.string().uuid(), isPublished: z.boolean() })
@@ -108,7 +108,7 @@ export const setExamPublished = createServerFn({ method: "POST" })
   });
 
 export const deleteExam = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -124,7 +124,7 @@ export const deleteExam = createServerFn({ method: "POST" })
 /* ================== EXAM SUBJECTS ================== */
 
 export const listExamSubjects = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z.object({ examId: z.string().uuid() }).parse(d),
   )
@@ -158,7 +158,7 @@ export const listExamSubjects = createServerFn({ method: "GET" })
   });
 
 export const saveExamSubject = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -208,7 +208,7 @@ export const saveExamSubject = createServerFn({ method: "POST" })
   });
 
 export const deleteExamSubject = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requirePlan("pro")])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
