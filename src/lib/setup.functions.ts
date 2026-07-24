@@ -50,10 +50,13 @@ export const runSetup = createServerFn({ method: "POST" })
     // Gate registration on a valid, verified license key. The signed payload
     // may bind the license to a specific school email — we enforce that here.
     const status = await verifyLicense(data.licenseKey);
-    if (!status.valid) {
+    if (!status.valid || !status.payload) {
       throw new Response(`Invalid license: ${status.reason ?? "unknown"}`, { status: 400 });
     }
 
+    // The tier baked into the license key decides which modules this school
+    // unlocks — Starter, Pro or Max (see plans.ts).
+    const plan = status.payload.tier;
 
     const existing = await db.select({ id: tenants.id }).from(tenants).limit(1);
     if (existing[0]) {
@@ -66,7 +69,7 @@ export const runSetup = createServerFn({ method: "POST" })
       .values({
         slug: data.schoolSlug,
         name: data.schoolName,
-        plan: "premium", // single-tenant licensed deployment = all features
+        plan, // entitlement tier from the activated license key
         subscriptionStatus: "active",
         licenseKey: data.licenseKey,
       })

@@ -1,7 +1,7 @@
 /**
  * Vendor-side license management.
  *
- * Licenses are a fixed list of 20 hardcoded keys (see `license-keys.ts`).
+ * Licenses are a fixed list of 30 seeded, tiered keys (see `license-keys.ts`).
  * The admin panel just lists them; no signing / issuance happens at runtime.
  */
 import { createServerFn } from "@tanstack/react-start";

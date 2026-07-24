@@ -563,6 +563,7 @@ function LicensePanel() {
         ) : st?.valid ? (
           <dl className="space-y-2 text-sm">
             <Row label="Institution" value={p?.institution} />
+            <Row label="Plan" value={p?.planLabel} />
             <Row label="Issued" value={p?.issuedAt} />
             <Row label="Expires" value={p?.expiresAt ?? "Perpetual"} />
             <Row label="Max students" value={p?.maxStudents ? String(p.maxStudents) : "Unlimited"} />

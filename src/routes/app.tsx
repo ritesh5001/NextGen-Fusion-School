@@ -30,6 +30,15 @@ import type { LucideIcon } from "lucide-react";
 import { getSession, setSession, subscribeSession, type SessionUser } from "@/lib/session";
 import { logout as logoutFn } from "@/lib/auth.functions";
 import { getLicenseStatus } from "@/lib/license.functions";
+import {
+  toPlanTier,
+  planAllowsPath,
+  minPlanFor,
+  PLAN_LABELS,
+  PLAN_FEATURES,
+  nextPlan,
+  type PlanTier,
+} from "@/lib/plans";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -186,6 +195,12 @@ function AppLayout() {
   const roleLabel = user.isSuperAdmin ? "Super admin" : user.tenant?.name ?? "Member";
   const schoolName = user.tenant?.name ?? "Platform";
 
+  // Entitlement tier for this school (from the activated license key). Super
+  // admins are the vendor operator and are never plan-gated.
+  const plan = toPlanTier(user.tenant?.plan);
+  const gated = !user.isSuperAdmin;
+  const routeLocked = gated && !planAllowsPath(plan, pathname);
+
   return (
     <div className="flex min-h-screen w-full bg-surface-muted">
       {/* Sidebar */}
@@ -201,6 +216,11 @@ function AppLayout() {
               <div className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted">School</div>
               <div className="mt-0.5 truncate text-sm font-medium text-sidebar-foreground">{schoolName}</div>
             </div>
+            {gated && (
+              <span className="ml-2 shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary ring-1 ring-primary/25">
+                {PLAN_LABELS[plan]}
+              </span>
+            )}
             <ChevronDown className="size-4 text-sidebar-muted" />
           </button>
         </div>
@@ -215,6 +235,21 @@ function AppLayout() {
                 {group.items.map((item) => {
                   const active = pathname === item.to;
                   const Icon = item.icon;
+                  const itemLocked = gated && !planAllowsPath(plan, item.to);
+                  if (itemLocked) {
+                    const needs = PLAN_LABELS[minPlanFor(item.to)];
+                    return (
+                      <div
+                        key={item.to}
+                        title={`Available on the ${needs} plan`}
+                        className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-muted/50"
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                        <Lock className="ml-auto size-3 shrink-0" />
+                      </div>
+                    );
+                  }
                   return (
                     <Link
                       key={item.to}
@@ -294,7 +329,11 @@ function AppLayout() {
               {license.label}
             </div>
           )}
-          <Outlet />
+          {routeLocked ? (
+            <UpgradePanel plan={plan} path={pathname} />
+          ) : (
+            <Outlet />
+          )}
           <footer className="border-t border-border bg-background px-8 py-3">
             <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
               <span>
@@ -314,6 +353,42 @@ function AppLayout() {
             </div>
           </footer>
         </main>
+      </div>
+    </div>
+  );
+}
+
+/** Shown when a school opens a module its current plan doesn't include. */
+function UpgradePanel({ plan, path }: { plan: PlanTier; path: string }) {
+  const required = minPlanFor(path);
+  const target = PLAN_FEATURES[required];
+  const upgradeTo = nextPlan(plan);
+  return (
+    <div className="flex flex-1 items-center justify-center px-6 py-16">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Lock className="size-6" />
+        </div>
+        <h2 className="mt-5 font-display text-xl font-semibold tracking-tight">
+          {target.label} plan required
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This module isn&apos;t part of your <strong>{PLAN_LABELS[plan]}</strong>{" "}
+          plan. {target.tagline}
+        </p>
+        <ul className="mt-5 space-y-2 text-left text-sm">
+          {target.highlights.map((h) => (
+            <li key={h} className="flex items-start gap-2">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+              <span className="text-muted-foreground">{h}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-xs text-muted-foreground">
+          Contact NextGen Fusion to upgrade
+          {upgradeTo ? ` to the ${PLAN_LABELS[upgradeTo]} plan` : ""} and activate a
+          new license key.
+        </p>
       </div>
     </div>
   );

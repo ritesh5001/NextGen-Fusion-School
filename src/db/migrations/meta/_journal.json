@@ -14,6 +14,7 @@
     { "idx": 9, "version": "7", "when": 1784330300000, "tag": "0009_phase10_settings_logs", "breakpoints": true },
     { "idx": 10, "version": "7", "when": 1784330400000, "tag": "0010_phase12_theme", "breakpoints": true },
     { "idx": 11, "version": "7", "when": 1784330500000, "tag": "0011_license", "breakpoints": true },
-    { "idx": 12, "version": "7", "when": 1784330600000, "tag": "0012_platform_keys", "breakpoints": true }
+    { "idx": 12, "version": "7", "when": 1784330600000, "tag": "0012_platform_keys", "breakpoints": true },
+    { "idx": 13, "version": "7", "when": 1784330700000, "tag": "0013_plan_tiers", "breakpoints": true }
   ]
 }

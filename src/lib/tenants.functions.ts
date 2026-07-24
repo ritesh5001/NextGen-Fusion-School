@@ -38,7 +38,7 @@ export const listTenants = createServerFn({ method: "GET" })
 const createTenantInput = z.object({
   slug: z.string().regex(slugRe, "Lowercase letters, digits, hyphens").min(2).max(40),
   name: z.string().min(2).max(120),
-  plan: z.enum(["starter", "growth", "premium"]).default("starter"),
+  plan: z.enum(["starter", "pro", "max"]).default("starter"),
   adminEmail: z.string().email(),
   adminPassword: z.string().min(8),
   adminFirstName: z.string().min(1),
@@ -150,7 +150,7 @@ export const createTenant = createServerFn({ method: "POST" })
 const updateTenantInput = z.object({
   id: z.string().uuid(),
   name: z.string().min(2).optional(),
-  plan: z.enum(["starter", "growth", "premium"]).optional(),
+  plan: z.enum(["starter", "pro", "max"]).optional(),
   subscriptionStatus: z
     .enum(["trialing", "active", "past_due", "canceled", "expired"])
     .optional(),

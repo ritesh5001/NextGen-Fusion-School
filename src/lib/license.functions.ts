@@ -36,7 +36,7 @@ export const setLicenseKey = createServerFn({ method: "POST" })
     const { tenants } = await import("@/db/schema");
     const { verifyLicense } = await import("./license.server");
     const status = await verifyLicense(data.licenseKey);
-    if (!status.valid) {
+    if (!status.valid || !status.payload) {
       throw new Response(`Invalid license: ${status.reason ?? "unknown"}`, {
         status: 400,
       });
@@ -45,9 +45,11 @@ export const setLicenseKey = createServerFn({ method: "POST" })
     const rows = await db.select({ id: tenants.id }).from(tenants).limit(1);
     if (!rows[0]) throw new Response("Not installed", { status: 400 });
     const { eq } = await import("drizzle-orm");
+    // Activating a key also (re)sets the plan to that key's tier, so upgrading
+    // is just a matter of activating a higher-tier key.
     await db
       .update(tenants)
-      .set({ licenseKey: data.licenseKey })
+      .set({ licenseKey: data.licenseKey, plan: status.payload.tier })
       .where(eq(tenants.id, rows[0].id));
     return { ok: true, status };
   });
