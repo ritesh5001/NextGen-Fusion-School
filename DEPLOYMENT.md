@@ -166,21 +166,35 @@ After setup, the public website will be live at `/` and the admin login at `/aut
 
 ## License issuance (vendor-side only)
 
-On your local machine (not the customer's server), run:
+License keys are **ed25519-signed tokens** — a customer cannot forge one or
+self-upgrade to a higher tier by editing the source. Keys **do not expire**;
+`--slug` binds a key to a specific school identifier (tenant binding). Every new
+school also gets an automatic **14-day full-feature (Max) trial** that settles to
+its licensed tier afterwards.
+
+Two ways to issue a key:
+
+**A. Offline CLI (recommended).** On your local machine (not the customer's
+server), run:
 
 ```bash
 node scripts/issue-license.mjs \
   --institution "St. Xavier's High School" \
-  --expires 2027-07-18 \
-  --max-students 2000
+  --slug st-xaviers \
+  --tier pro          # starter | pro | max
 ```
 
 First run generates a keypair in `.keys/`:
 
 - `.keys/license-private.b64` — **keep secret, never commit or share**
-- `.keys/license-public.b64` — paste this into the customer's `.env` as `LICENSE_PUBLIC_KEY`
+- `.keys/license-public.b64` — set as `LICENSE_PUBLIC_KEY` in the customer's `.env`
 
 Then copy the printed license key and paste it into the customer's setup form.
+
+**B. In-app issuer.** On the vendor deployment, sign in as the platform admin
+and open **License Issuer** — fill in institution / identifier / tier to mint a
+signed key, and copy the shown public key into each customer's
+`LICENSE_PUBLIC_KEY`.
 
 ## Backups
 

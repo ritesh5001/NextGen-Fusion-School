@@ -1,27 +1,31 @@
 #!/usr/bin/env node
 /**
- * License issuance CLI (vendor-only).
+ * License issuance CLI (vendor-only, offline).
  *
  * Usage:
  *   node scripts/issue-license.mjs \
  *     --institution "St. Xavier's High School" \
- *     --expires 2027-07-18 \
- *     --max-students 2000
+ *     --slug st-xaviers \
+ *     --tier pro
  *
- * First run generates an ed25519 keypair at .keys/license-*.b64 and prints
- * the LICENSE_PUBLIC_KEY value you must set in the customer's .env. Keep
+ * First run generates an ed25519 keypair at .keys/license-*.b64 and prints the
+ * LICENSE_PUBLIC_KEY value to set in the customer's .env. Keep
  * .keys/license-private.b64 secret — never commit it, never share it.
+ *
+ * Notes:
+ *  - Keys DO NOT expire (product decision). --slug binds the key to a school
+ *    identifier so it can only be activated on that school (tenant binding).
+ *  - Token format: base64url(payloadJSON).base64url(ed25519-signature), the
+ *    exact format the app verifies (see src/lib/license-crypto.server.ts).
  */
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { getPublicKey, sign, utils } from "@noble/ed25519";
+import crypto from "node:crypto";
 
-function toB64Url(buf) {
-  return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-function fromB64Url(s) {
-  s = s.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = s.length % 4 === 0 ? 0 : 4 - (s.length % 4);
-  return new Uint8Array(Buffer.from(s + "=".repeat(pad), "base64"));
+const SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+const PKCS8_PREFIX = Buffer.from("302e020100300506032b657004220420", "hex");
+
+function b64url(buf) {
+  return Buffer.from(buf).toString("base64url");
 }
 function parseArgs(argv) {
   const out = {};
@@ -29,24 +33,30 @@ function parseArgs(argv) {
   return out;
 }
 
-async function ensureKeys() {
+function ensureKeys() {
   mkdirSync(".keys", { recursive: true });
   const privPath = ".keys/license-private.b64";
   const pubPath = ".keys/license-public.b64";
   if (!existsSync(privPath)) {
-    const priv = utils.randomSecretKey();
-    const pub = await getPublicKey(priv);
-    writeFileSync(privPath, toB64Url(priv));
-    writeFileSync(pubPath, toB64Url(pub));
+    const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+    const priv = privateKey.export({ format: "jwk" }).d; // raw seed, base64url
+    const pub = publicKey.export({ format: "jwk" }).x; // raw pub, base64url
+    writeFileSync(privPath, priv);
+    writeFileSync(pubPath, pub);
     console.log("Generated new signing keypair in .keys/");
     console.log("Set this in the customer's .env:");
-    console.log(`  LICENSE_PUBLIC_KEY=${toB64Url(pub)}`);
+    console.log(`  LICENSE_PUBLIC_KEY=${pub}`);
     console.log("");
   }
   return {
-    priv: fromB64Url(readFileSync(".keys/license-private.b64", "utf8")),
-    pub: readFileSync(".keys/license-public.b64", "utf8"),
+    priv: readFileSync(privPath, "utf8").trim(),
+    pub: readFileSync(pubPath, "utf8").trim(),
   };
+}
+
+function privateKeyFromRaw(rawB64url) {
+  const der = Buffer.concat([PKCS8_PREFIX, Buffer.from(rawB64url, "base64url")]);
+  return crypto.createPrivateKey({ key: der, format: "der", type: "pkcs8" });
 }
 
 const args = parseArgs(process.argv);
@@ -54,21 +64,28 @@ if (!args.institution) {
   console.error("Missing --institution");
   process.exit(1);
 }
+const tier = args.tier ?? "pro";
+if (!["starter", "pro", "max"].includes(tier)) {
+  console.error(`Invalid --tier "${tier}" (expected starter | pro | max)`);
+  process.exit(1);
+}
 
-const { priv, pub } = await ensureKeys();
+const { priv, pub } = ensureKeys();
 
 const payload = {
   institution: args.institution,
+  slug: args.slug ?? null,
+  tier,
   issuedAt: new Date().toISOString().slice(0, 10),
-  expiresAt: args.expires ?? null,
   maxStudents: Number(args["max-students"] ?? 0),
   features: (args.features ?? "*").split(","),
 };
 
 const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
-const sig = await sign(payloadBytes, priv);
-const licenseKey = `${toB64Url(payloadBytes)}.${toB64Url(sig)}`;
+const sig = crypto.sign(null, payloadBytes, privateKeyFromRaw(priv));
+const licenseKey = `${b64url(payloadBytes)}.${b64url(sig)}`;
 
+console.log(`Tier: ${tier}${payload.slug ? ` · bound to "${payload.slug}"` : " · unbound"}`);
 console.log("License key:");
 console.log(licenseKey);
 console.log("");

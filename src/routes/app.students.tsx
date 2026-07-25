@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -6,12 +6,14 @@ import {
   listStudents,
   saveStudent,
   deleteStudent,
+  getStudentUsage,
 } from "@/lib/students.functions";
 import {
   listClasses,
   listSections,
 } from "@/lib/academic.functions";
 import { PageHeader } from "@/components/page-header";
+import { UpgradeNudge } from "@/components/upgrade";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -156,6 +158,14 @@ function StudentsPage() {
           </Button>
         }
       />
+
+      <UpgradeNudge
+        requiredPlan="pro"
+        feature="Bulk ID-card printing and online admissions from this roster"
+        className="mb-4"
+      />
+
+      <StudentCapMeter />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[240px]">
@@ -478,6 +488,59 @@ function StudentsPage() {
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/** Usage meter that appears once a school passes 80% of its plan's student cap. */
+function StudentCapMeter() {
+  const usage = useServerFn(getStudentUsage);
+  const [data, setData] = useState<{ count: number; cap: number | null } | null>(
+    null,
+  );
+  useEffect(() => {
+    usage()
+      .then((r) => setData({ count: r.count, cap: r.cap }))
+      .catch(() => {});
+  }, [usage]);
+
+  if (!data || data.cap == null) return null;
+  const pct = Math.min(100, Math.round((data.count / data.cap) * 100));
+  if (pct < 80) return null;
+  const full = data.count >= data.cap;
+
+  return (
+    <div
+      className={`mb-4 rounded-xl border px-4 py-3 ${
+        full
+          ? "border-destructive/40 bg-destructive/5"
+          : "border-amber-500/40 bg-amber-500/10"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1 text-sm">
+          <span className="font-medium">
+            {data.count} / {data.cap} students
+          </span>{" "}
+          <span className="text-muted-foreground">
+            {full
+              ? "— you've reached your plan's limit. Upgrade to admit more."
+              : "— you're nearing your plan's limit."}
+          </span>
+        </div>
+        <Link
+          to="/app/upgrade"
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+        >
+          Upgrade for more
+        </Link>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full ${full ? "bg-destructive" : "bg-amber-500"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }

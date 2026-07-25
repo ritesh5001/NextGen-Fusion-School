@@ -76,10 +76,11 @@ export const login = createServerFn({ method: "POST" })
       // Adopt the sole tenant (single-institution mode) so tenant-scoped
       // modules work when the admin browses school data.
       const allT = await db
-        .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, plan: tenants.plan })
+        .select({ id: tenants.id })
         .from(tenants)
         .limit(2);
-      const tenant = allT.length === 1 ? allT[0] : null;
+      const { buildTenantSession } = await import("./entitlements.server");
+      const tenant = allT.length === 1 ? await buildTenantSession(allT[0].id) : null;
 
       const access = await signAccessToken({
         sub: PLATFORM_ADMIN_ID,
@@ -181,17 +182,8 @@ export const login = createServerFn({ method: "POST" })
       .where(eq(userRoles.userId, user.id));
     const roleKeys = roleRows.map((r) => r.key);
 
-    let tenant: { id: string; name: string; slug: string; plan: string } | null = null;
-    if (effectiveTid) {
-      const tRow = (
-        await db
-          .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, plan: tenants.plan })
-          .from(tenants)
-          .where(eq(tenants.id, effectiveTid))
-          .limit(1)
-      )[0];
-      if (tRow) tenant = tRow;
-    }
+    const { buildTenantSession } = await import("./entitlements.server");
+    const tenant = effectiveTid ? await buildTenantSession(effectiveTid) : null;
 
     return {
       accessToken: access,
@@ -322,20 +314,12 @@ export const me = createServerFn({ method: "GET" })
   .middleware([requireAuth])
   .handler(async ({ context }) => {
     const { getDb } = await import("@/db/client.server");
-    const { users, tenants } = await import("@/db/schema");
+    const { users } = await import("@/db/schema");
+    const { buildTenantSession } = await import("./entitlements.server");
     const db = getDb();
 
     /* Hardcoded platform admin: no DB row, synthesize the profile. */
     if (context.userId === PLATFORM_ADMIN_ID) {
-      const t = context.tenantId
-        ? (
-            await db
-              .select()
-              .from(tenants)
-              .where(eq(tenants.id, context.tenantId))
-              .limit(1)
-          )[0]
-        : null;
       return {
         id: PLATFORM_ADMIN_ID,
         email: PLATFORM_ADMIN_EMAIL,
@@ -343,7 +327,7 @@ export const me = createServerFn({ method: "GET" })
         lastName: "Fusion",
         avatarUrl: null,
         isSuperAdmin: true,
-        tenant: t ? { id: t.id, name: t.name, slug: t.slug, plan: t.plan } : null,
+        tenant: context.tenantId ? await buildTenantSession(context.tenantId) : null,
         perms: ["*"],
       };
     }
@@ -352,15 +336,6 @@ export const me = createServerFn({ method: "GET" })
       await db.select().from(users).where(eq(users.id, context.userId)).limit(1)
     )[0];
     if (!u) throw new Response("Unauthorized", { status: 401 });
-    const tenant = u.tenantId
-      ? (
-          await db
-            .select()
-            .from(tenants)
-            .where(eq(tenants.id, u.tenantId))
-            .limit(1)
-        )[0]
-      : null;
     return {
       id: u.id,
       email: u.email,
@@ -368,9 +343,7 @@ export const me = createServerFn({ method: "GET" })
       lastName: u.lastName,
       avatarUrl: u.avatarUrl,
       isSuperAdmin: false,
-      tenant: tenant
-        ? { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan }
-        : null,
+      tenant: u.tenantId ? await buildTenantSession(u.tenantId) : null,
       perms: context.perms,
     };
   });

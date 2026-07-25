@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql, gte, lte } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -13,7 +13,7 @@ function tenantOf(context: { tenantId: string | null }) {
 }
 
 export const listAccountHeads = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "accounts.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -35,7 +35,7 @@ const upsertHead = z.object({
 });
 
 export const saveAccountHead = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["accounts.create", "accounts.update", "accounts.delete"] })])
   .inputValidator((d: unknown) => upsertHead.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -69,7 +69,7 @@ export const saveAccountHead = createServerFn({ method: "POST" })
   });
 
 export const deleteAccountHead = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["accounts.create", "accounts.update", "accounts.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -94,7 +94,7 @@ const txInput = z.object({
 });
 
 export const saveTransaction = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["accounts.create", "accounts.update", "accounts.delete"] })])
   .inputValidator((d: unknown) => txInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -137,7 +137,7 @@ export const saveTransaction = createServerFn({ method: "POST" })
   });
 
 export const deleteTransaction = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["accounts.create", "accounts.update", "accounts.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -156,7 +156,7 @@ export const deleteTransaction = createServerFn({ method: "POST" })
   });
 
 export const ledger = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "accounts.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({

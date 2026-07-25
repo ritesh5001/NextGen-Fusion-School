@@ -11,7 +11,17 @@ export type SessionUser = {
   isSuperAdmin: boolean;
   perms: string[];
   roleKeys?: string[];
-  tenant?: { id: string; name: string; slug: string; plan: string } | null;
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+    /** Effective plan — "max" during an active trial. Drives UI gating. */
+    plan: string;
+    /** Tier the license grants (applies once the trial ends). */
+    licensedPlan?: string;
+    trialActive?: boolean;
+    trialDaysLeft?: number;
+  } | null;
 };
 
 type Session = {

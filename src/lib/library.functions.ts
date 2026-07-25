@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 
 /* ================== BOOKS ================== */
 export const listBooks = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "library.read" })])
   .inputValidator((d: unknown) =>
     z.object({ q: z.string().optional() }).parse(d ?? {}),
   )
@@ -52,7 +52,7 @@ const bookUpsert = z.object({
 });
 
 export const saveBook = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["library.create", "library.update", "library.delete"] })])
   .inputValidator((d: unknown) => bookUpsert.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -99,7 +99,7 @@ export const saveBook = createServerFn({ method: "POST" })
   });
 
 export const deleteBook = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["library.create", "library.update", "library.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -114,7 +114,7 @@ export const deleteBook = createServerFn({ method: "POST" })
 
 /* ================== ISSUES ================== */
 export const listIssues = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "library.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -171,7 +171,7 @@ const issueSchema = z.object({
 });
 
 export const issueBook = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["library.create", "library.update", "library.delete"] })])
   .inputValidator((d: unknown) => issueSchema.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -218,7 +218,7 @@ const returnSchema = z.object({
 });
 
 export const returnBook = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["library.create", "library.update", "library.delete"] })])
   .inputValidator((d: unknown) => returnSchema.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -267,7 +267,7 @@ export const returnBook = createServerFn({ method: "POST" })
   });
 
 export const deleteIssue = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["library.create", "library.update", "library.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

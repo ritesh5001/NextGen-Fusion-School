@@ -21,6 +21,7 @@ import { listAccountHeads } from "@/lib/accounts.functions";
 import { listAcademicYears, listClasses } from "@/lib/academic.functions";
 import { listStudents } from "@/lib/students.functions";
 import { PageHeader } from "@/components/page-header";
+import { UpgradeNudge } from "@/components/upgrade";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,6 +75,13 @@ function FeesPage() {
         title="Fees"
         description="Fee heads, structures, invoices and collections."
       />
+
+      <UpgradeNudge
+        requiredPlan="pro"
+        feature="A full double-entry accounts ledger and financial reports"
+        className="mb-6"
+      />
+
       <div className="mb-6 flex flex-wrap gap-1 rounded-md border border-border bg-surface-muted p-1 text-sm w-fit">
         {(
           [

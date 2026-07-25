@@ -8,6 +8,7 @@ import {
   deleteTeacher,
 } from "@/lib/teachers.functions";
 import { PageHeader } from "@/components/page-header";
+import { UpgradeNudge } from "@/components/upgrade";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,6 +89,12 @@ function TeachersPage() {
             <Plus className="mr-2 size-4" /> Add teacher
           </Button>
         }
+      />
+
+      <UpgradeNudge
+        requiredPlan="max"
+        feature="Full staff HRM — leave management, payroll and payslips"
+        className="mb-4"
       />
 
       <div className="mb-4 relative max-w-md">

@@ -137,6 +137,23 @@ export const saveStudent = createServerFn({ method: "POST" })
         .where(and(eq(students.id, data.id), eq(students.tenantId, tid)));
       return { ok: true, id: data.id };
     }
+
+    // Enforce the per-plan active-student cap on new admissions. During the
+    // 14-day trial the effective plan is Max, so the cap is unlimited.
+    const { readEntitlement, countActiveStudents } = await import(
+      "./entitlements.server"
+    );
+    const ent = await readEntitlement(tid);
+    if (ent.studentCap != null) {
+      const count = await countActiveStudents(tid);
+      if (count >= ent.studentCap) {
+        throw new Response(
+          `Your ${ent.effectivePlan.toUpperCase()} plan is limited to ${ent.studentCap} students. Upgrade to add more.`,
+          { status: 403 },
+        );
+      }
+    }
+
     const [row] = await db.insert(students).values(payload).returning();
     return { ok: true, id: row.id };
   });
@@ -172,4 +189,23 @@ export const getStudent = createServerFn({ method: "GET" })
     )[0];
     if (!row) throw new Response("Not found", { status: 404 });
     return row;
+  });
+
+/** Active-student count vs the plan cap — powers the usage meter / upsell. */
+export const getStudentUsage = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .handler(async ({ context }) => {
+    const tid = tenantOf(context);
+    const { readEntitlement, countActiveStudents } = await import(
+      "./entitlements.server"
+    );
+    const ent = await readEntitlement(tid);
+    const count = await countActiveStudents(tid);
+    return {
+      count,
+      cap: ent.studentCap,
+      plan: ent.effectivePlan,
+      licensedPlan: ent.licensedPlan,
+      trialActive: ent.trialActive,
+    };
   });

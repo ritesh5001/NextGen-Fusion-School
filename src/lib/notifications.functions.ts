@@ -4,10 +4,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 export const listNotifications = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "notifications.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -42,7 +42,7 @@ export const listNotifications = createServerFn({ method: "GET" })
   });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["notifications.create", "notifications.update", "notifications.delete"] })])
   .inputValidator((d: unknown) =>
     z.object({ id: z.string().uuid(), isRead: z.boolean().default(true) }).parse(
       d,
@@ -65,7 +65,7 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   });
 
 export const markAllRead = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["notifications.create", "notifications.update", "notifications.delete"] })])
   .handler(async ({ context }) => {
     const { getDb } = await import("@/db/client.server");
     const { notifications } = await import("@/db/schema");
@@ -83,7 +83,7 @@ export const markAllRead = createServerFn({ method: "POST" })
   });
 
 export const deleteNotification = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["notifications.create", "notifications.update", "notifications.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { getDb } = await import("@/db/client.server");

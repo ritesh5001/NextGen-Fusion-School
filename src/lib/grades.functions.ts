@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, asc } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -13,7 +13,7 @@ function tenantOf(context: { tenantId: string | null }) {
 }
 
 export const listGradeScales = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "exams.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -36,7 +36,7 @@ export const listGradeScales = createServerFn({ method: "GET" })
   });
 
 export const saveGradeScale = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["exams.create", "exams.update", "exams.delete"] })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -76,7 +76,7 @@ export const saveGradeScale = createServerFn({ method: "POST" })
   });
 
 export const deleteGradeScale = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["exams.create", "exams.update", "exams.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -90,7 +90,7 @@ export const deleteGradeScale = createServerFn({ method: "POST" })
   });
 
 export const saveGradeBands = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["exams.create", "exams.update", "exams.delete"] })])
   .inputValidator((d: unknown) =>
     z
       .object({

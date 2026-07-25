@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 async function requireAdmin(context: {
   userId: string | null;
@@ -61,7 +61,7 @@ export async function writeLog(args: {
 
 /* -------- System health -------- */
 export const getSystemHealth = createServerFn({ method: "GET" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", perm: "settings.read" })])
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { getDb } = await import("@/db/client.server");
@@ -150,7 +150,7 @@ const listLogsInput = z.object({
 });
 
 export const listSystemLogs = createServerFn({ method: "GET" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", perm: "settings.read" })])
   .inputValidator((d: unknown) => listLogsInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
@@ -188,7 +188,7 @@ export const listSystemLogs = createServerFn({ method: "GET" })
 const clearedFlag = { at: 0 };
 
 export const clearCache = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["settings.create", "settings.update", "settings.delete"] })])
   .handler(async ({ context }) => {
     await requireAdmin(context);
     clearedFlag.at = Date.now();
@@ -203,7 +203,7 @@ export const clearCache = createServerFn({ method: "POST" })
 
 /* -------- DB integrity check — verifies key relationships / counts -------- */
 export const runIntegrityCheck = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["settings.create", "settings.update", "settings.delete"] })])
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { getDb } = await import("@/db/client.server");
@@ -274,7 +274,7 @@ export const runIntegrityCheck = createServerFn({ method: "POST" })
 
 /* -------- Test log (used by UI to verify pipeline) -------- */
 export const writeTestLog = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["settings.create", "settings.update", "settings.delete"] })])
   .inputValidator((d: unknown) =>
     z
       .object({

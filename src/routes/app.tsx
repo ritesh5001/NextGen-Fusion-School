@@ -24,6 +24,8 @@ import {
   Wrench,
   Lock,
   Palette,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -200,6 +202,9 @@ function AppLayout() {
   const plan = toPlanTier(user.tenant?.plan);
   const gated = !user.isSuperAdmin;
   const routeLocked = gated && !planAllowsPath(plan, pathname);
+  const trialActive = gated && !!user.tenant?.trialActive;
+  const trialDaysLeft = user.tenant?.trialDaysLeft ?? 0;
+  const licensedPlan = toPlanTier(user.tenant?.licensedPlan);
 
   return (
     <div className="flex min-h-screen w-full bg-surface-muted">
@@ -237,17 +242,23 @@ function AppLayout() {
                   const Icon = item.icon;
                   const itemLocked = gated && !planAllowsPath(plan, item.to);
                   if (itemLocked) {
-                    const needs = PLAN_LABELS[minPlanFor(item.to)];
+                    const need = minPlanFor(item.to);
                     return (
-                      <div
+                      <Link
                         key={item.to}
-                        title={`Available on the ${needs} plan`}
-                        className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-muted/50"
+                        to="/app/upgrade"
+                        title={`Available on the ${PLAN_LABELS[need]} plan — click to upgrade`}
+                        className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-muted/60 transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       >
                         <Icon className="size-4 shrink-0" />
                         <span className="truncate">{item.label}</span>
-                        <Lock className="ml-auto size-3 shrink-0" />
-                      </div>
+                        <span className="ml-auto flex items-center gap-1">
+                          <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary">
+                            {PLAN_LABELS[need]}
+                          </span>
+                          <Lock className="size-3 shrink-0" />
+                        </span>
+                      </Link>
                     );
                   }
                   return (
@@ -269,6 +280,19 @@ function AppLayout() {
             </div>
           ))}
         </nav>
+
+        {gated && plan !== "max" && (
+          <div className="px-3 pb-1">
+            <Link
+              to="/app/upgrade"
+              className="flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-xs font-semibold text-primary ring-1 ring-primary/25 transition hover:bg-primary/15"
+            >
+              <Sparkles className="size-4 shrink-0" />
+              <span>Upgrade plan</span>
+              <ArrowRight className="ml-auto size-4" />
+            </Link>
+          </div>
+        )}
 
         <div className="border-t border-sidebar-border p-3">
           <div className="flex items-center gap-3 rounded-md px-2 py-2">
@@ -318,6 +342,18 @@ function AppLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
+          {trialActive && (
+            <div className="flex flex-wrap items-center gap-2 border-b border-primary/30 bg-primary/10 px-8 py-2 text-xs font-medium text-primary">
+              <Sparkles className="size-3.5 shrink-0" />
+              <span>
+                Free trial — {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} of full
+                Max access left. After that your plan becomes {PLAN_LABELS[licensedPlan]}.
+              </span>
+              <Link to="/app/upgrade" className="ml-auto font-semibold underline">
+                View plans
+              </Link>
+            </div>
+          )}
           {license && (
             <div
               className={`border-b px-8 py-2 text-xs font-medium ${
@@ -384,10 +420,24 @@ function UpgradePanel({ plan, path }: { plan: PlanTier; path: string }) {
             </li>
           ))}
         </ul>
-        <p className="mt-6 text-xs text-muted-foreground">
-          Contact NextGen Fusion to upgrade
-          {upgradeTo ? ` to the ${PLAN_LABELS[upgradeTo]} plan` : ""} and activate a
-          new license key.
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Link
+            to="/app/upgrade"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+          >
+            See upgrade options <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            to="/app/settings"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium transition hover:bg-surface-muted"
+          >
+            Activate a license key
+          </Link>
+        </div>
+        <p className="mt-4 text-xs text-muted-foreground">
+          {upgradeTo
+            ? `Upgrade to the ${PLAN_LABELS[upgradeTo]} plan or higher to unlock this module.`
+            : "Activate a license key that includes this module."}
         </p>
       </div>
     </div>

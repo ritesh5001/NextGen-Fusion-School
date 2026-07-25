@@ -7,7 +7,8 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { verifyAccessToken, type AccessClaims } from "./auth-core.server";
-import { toPlanTier, planAtLeast, PLAN_LABELS, type PlanTier } from "./plans";
+import { planAtLeast, PLAN_LABELS, type PlanTier } from "./plans";
+import { hasPerm } from "./permissions.server";
 
 export type AuthContext = {
   userId: string;
@@ -55,28 +56,64 @@ export const requireAuth = createMiddleware().server(async ({ next }) => {
  * Usage: `.middleware([requirePlan("pro")])`
  */
 export function requirePlan(minTier: PlanTier) {
+  return requireAccess({ plan: minTier });
+}
+
+/**
+ * Combined server-side gate for a paid, permissioned module. Chain this instead
+ * of `requireAuth` on module server functions:
+ *
+ *   .middleware([requireAccess({ plan: "pro", perm: "exams.read" })])
+ *   .middleware([requireAccess({ plan: "pro", anyPerm: ["exams.create","exams.update","exams.delete"] })])
+ *
+ *  - `perm`     — a single permission the caller must hold.
+ *  - `anyPerm`  — caller must hold at least one of these (use for writes).
+ *  - `plan`     — minimum tier; checked against the tenant's EFFECTIVE plan, so
+ *                 an active 14-day trial (which grants Max) passes, and the gate
+ *                 re-tightens automatically when the trial ends.
+ *
+ * Super admins (the vendor operator) bypass both gates. Permissions come from
+ * the signed access token; the plan is read fresh so upgrades take effect at
+ * once and a stale token can't reach a locked module.
+ */
+export function requireAccess(opts: {
+  plan?: PlanTier;
+  perm?: string;
+  anyPerm?: string[];
+}) {
   return createMiddleware()
     .middleware([requireAuth])
     .server(async ({ next, context }) => {
       if (!context.isSuperAdmin) {
-        if (!context.tenantId) {
-          throw new Response("Tenant scope required", { status: 400 });
+        // RBAC — permission keys carried in the access token.
+        if (opts.perm && !hasPerm(context.perms, opts.perm)) {
+          throw new Response("Forbidden — you don't have access to this action", {
+            status: 403,
+          });
         }
-        const { getDb } = await import("@/db/client.server");
-        const { tenants } = await import("@/db/schema");
-        const { eq } = await import("drizzle-orm");
-        const db = getDb();
-        const rows = await db
-          .select({ plan: tenants.plan })
-          .from(tenants)
-          .where(eq(tenants.id, context.tenantId))
-          .limit(1);
-        const plan = toPlanTier(rows[0]?.plan ?? null);
-        if (!planAtLeast(plan, minTier)) {
-          throw new Response(
-            `This feature requires the ${PLAN_LABELS[minTier]} plan. Upgrade your license to continue.`,
-            { status: 403 },
-          );
+        if (
+          opts.anyPerm &&
+          opts.anyPerm.length > 0 &&
+          !opts.anyPerm.some((p) => hasPerm(context.perms, p))
+        ) {
+          throw new Response("Forbidden — you don't have access to this action", {
+            status: 403,
+          });
+        }
+
+        // Plan gate — trial-aware effective plan.
+        if (opts.plan) {
+          if (!context.tenantId) {
+            throw new Response("Tenant scope required", { status: 400 });
+          }
+          const { readEntitlement } = await import("./entitlements.server");
+          const ent = await readEntitlement(context.tenantId);
+          if (!planAtLeast(ent.effectivePlan, opts.plan)) {
+            throw new Response(
+              `This feature requires the ${PLAN_LABELS[opts.plan]} plan. Upgrade your license to continue.`,
+              { status: 403 },
+            );
+          }
         }
       }
       return next();

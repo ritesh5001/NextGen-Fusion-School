@@ -2,7 +2,7 @@
  * Plan tiers and feature entitlements.
  *
  * NextGen Fusion ships three license tiers. A school's tier is decided by the
- * license key it activates during setup (see `license-keys.ts` +
+ * license key it activates during setup (see `license.server.ts` +
  * `setup.functions.ts`). The tenant's `plan` column stores the tier and is
  * carried into the client session, so both the sidebar and the route guard can
  * decide what a school is allowed to open.

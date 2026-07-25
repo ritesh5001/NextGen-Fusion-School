@@ -42,35 +42,48 @@ export const runSetup = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => setupInput.parse(d))
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
-    const { tenants, users, roles, userRoles, rolePermissions } = await import("@/db/schema");
+    const { tenants, users, roles, userRoles, rolePermissions, auditLog } = await import("@/db/schema");
     const { hashPassword } = await import("./auth-core.server");
     const { verifyLicense } = await import("./license.server");
+    const { TRIAL_DAYS } = await import("./entitlements.server");
     const db = getDb();
 
-    // Gate registration on a valid, verified license key. The signed payload
-    // may bind the license to a specific school email — we enforce that here.
+    // Gate registration on a valid, cryptographically-signed license key.
     const status = await verifyLicense(data.licenseKey);
     if (!status.valid || !status.payload) {
       throw new Response(`Invalid license: ${status.reason ?? "unknown"}`, { status: 400 });
     }
 
-    // The tier baked into the license key decides which modules this school
-    // unlocks — Starter, Pro or Max (see plans.ts).
+    // Tenant binding: if the signed key names an institution slug, the school
+    // being created must match it. Stops one customer's key being reused to
+    // stand up a different school.
+    if (status.payload.slug && status.payload.slug !== data.schoolSlug) {
+      throw new Response(
+        `This license key is bound to "${status.payload.slug}", not "${data.schoolSlug}".`,
+        { status: 400 },
+      );
+    }
+
+    // Licensed tier from the key. Every school also starts on a 14-day
+    // full-feature trial (see entitlements.server.ts) which later settles to
+    // this tier.
     const plan = status.payload.tier;
+    const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 86_400_000);
 
     const existing = await db.select({ id: tenants.id }).from(tenants).limit(1);
     if (existing[0]) {
       throw new Response("Setup already completed", { status: 400 });
     }
 
-    // 1. Create the institution
+    // 1. Create the institution (on trial)
     const [tenant] = await db
       .insert(tenants)
       .values({
         slug: data.schoolSlug,
         name: data.schoolName,
-        plan, // entitlement tier from the activated license key
-        subscriptionStatus: "active",
+        plan, // licensed tier from the activated license key
+        subscriptionStatus: "trialing",
+        trialEndsAt,
         licenseKey: data.licenseKey,
       })
       .returning({ id: tenants.id, slug: tenants.slug, name: tenants.name });
@@ -133,6 +146,20 @@ export const runSetup = createServerFn({ method: "POST" })
     if (adminRole) {
       await db.insert(userRoles).values({ userId: owner.id, roleId: adminRole.id });
     }
+
+    // Audit the license activation.
+    await db.insert(auditLog).values({
+      tenantId: tenant.id,
+      userId: owner.id,
+      action: "license.activate",
+      entity: "tenant",
+      entityId: tenant.id,
+      meta: JSON.stringify({
+        tier: plan,
+        via: "setup",
+        institution: status.payload.institution ?? null,
+      }),
+    });
 
     return { ok: true, tenantId: tenant.id, ownerId: owner.id };
   });

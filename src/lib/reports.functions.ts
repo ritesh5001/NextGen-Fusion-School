@@ -3,7 +3,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq, sql } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -12,7 +12,7 @@ function tenantOf(context: { tenantId: string | null }) {
 }
 
 export const getReportsSummary = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "reports.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");

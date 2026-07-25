@@ -11,6 +11,7 @@ import {
 } from "@/lib/attendance.functions";
 import { listClasses, listSections } from "@/lib/academic.functions";
 import { PageHeader } from "@/components/page-header";
+import { UpgradeNudge } from "@/components/upgrade";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,6 +104,12 @@ function AttendancePage() {
       <PageHeader
         title="Attendance"
         description="Daily attendance marking and monthly reports."
+      />
+
+      <UpgradeNudge
+        requiredPlan="pro"
+        feature="Cross-class attendance analytics and printable report exports"
+        className="mb-6"
       />
 
       <Tabs defaultValue="daily">

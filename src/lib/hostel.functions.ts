@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 
 /* ================== HOSTELS ================== */
 export const listHostels = createServerFn({ method: "GET" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", perm: "hostel.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -39,7 +39,7 @@ const hostelUpsert = z.object({
 });
 
 export const saveHostel = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) => hostelUpsert.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -78,7 +78,7 @@ export const saveHostel = createServerFn({ method: "POST" })
   });
 
 export const deleteHostel = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -93,7 +93,7 @@ export const deleteHostel = createServerFn({ method: "POST" })
 
 /* ================== ROOMS ================== */
 export const listRooms = createServerFn({ method: "GET" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", perm: "hostel.read" })])
   .inputValidator((d: unknown) =>
     z.object({ hostelId: z.string().uuid().optional() }).parse(d ?? {}),
   )
@@ -136,7 +136,7 @@ const roomUpsert = z.object({
 });
 
 export const saveRoom = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) => roomUpsert.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -173,7 +173,7 @@ export const saveRoom = createServerFn({ method: "POST" })
   });
 
 export const deleteRoom = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -188,7 +188,7 @@ export const deleteRoom = createServerFn({ method: "POST" })
 
 /* ================== ALLOCATIONS ================== */
 export const listAllocations = createServerFn({ method: "GET" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", perm: "hostel.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -238,7 +238,7 @@ const allocateSchema = z.object({
 });
 
 export const allocateRoom = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) => allocateSchema.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -293,7 +293,7 @@ export const allocateRoom = createServerFn({ method: "POST" })
   });
 
 export const vacateAllocation = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) =>
     z
       .object({ id: z.string().uuid(), vacatedOn: z.string().min(1) })
@@ -317,7 +317,7 @@ export const vacateAllocation = createServerFn({ method: "POST" })
   });
 
 export const deleteAllocation = createServerFn({ method: "POST" })
-  .middleware([requirePlan("max")])
+  .middleware([requireAccess({ plan: "max", anyPerm: ["hostel.create", "hostel.update", "hostel.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, asc, inArray, sql } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 
 /** Return roster + existing marks for a class/section for a given exam-subject */
 export const getMarksGrid = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "marks.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -105,7 +105,7 @@ export const getMarksGrid = createServerFn({ method: "GET" })
   });
 
 export const saveMarks = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["marks.create", "marks.update", "marks.delete"] })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -156,7 +156,7 @@ export const saveMarks = createServerFn({ method: "POST" })
  * Compute a class result: every student in the exam's class × all exam subjects.
  */
 export const getExamResults = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "marks.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({

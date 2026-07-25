@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, inArray } from "drizzle-orm";
-import { requirePlan } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -13,7 +13,7 @@ function tenantOf(context: { tenantId: string | null }) {
 }
 
 export const listPromotionCandidates = createServerFn({ method: "GET" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", perm: "promotion.read" })])
   .inputValidator((d: unknown) =>
     z.object({ classId: z.string().uuid() }).parse(d),
   )
@@ -53,7 +53,7 @@ const promoteInput = z.object({
 });
 
 export const promoteStudents = createServerFn({ method: "POST" })
-  .middleware([requirePlan("pro")])
+  .middleware([requireAccess({ plan: "pro", anyPerm: ["promotion.create", "promotion.update", "promotion.delete"] })])
   .inputValidator((d: unknown) => promoteInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

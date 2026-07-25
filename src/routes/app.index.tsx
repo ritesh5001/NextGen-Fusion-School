@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, Plus } from "lucide-react";
+import { UpgradeNudge } from "@/components/upgrade";
 
 export const Route = createFileRoute("/app/")({
   component: DashboardOverview,
@@ -38,6 +39,12 @@ function DashboardOverview() {
           <Plus className="size-4" /> Quick action
         </button>
       </div>
+
+      <UpgradeNudge
+        requiredPlan="pro"
+        feature="Exam results, report cards, online admissions and analytics"
+        className="mb-8"
+      />
 
       {/* KPIs */}
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
