@@ -7,8 +7,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { and, eq, isNull } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { and, eq, isNull, gt, sql } from "drizzle-orm";
+import { requireAuth, requireAccess } from "./auth-middleware.server";
 
 const loginInput = z.object({
   email: z.string().email(),
@@ -61,7 +61,7 @@ export const login = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => loginInput.parse(d))
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
-    const { users, tenants, refreshTokens, userRoles, roles } = await import("@/db/schema");
+    const { users, tenants, refreshTokens, userRoles, roles, auditLog } = await import("@/db/schema");
     const {
       verifyPassword,
       signAccessToken,
@@ -132,6 +132,37 @@ export const login = createServerFn({ method: "POST" })
       if (allTenants.length === 1) tenantId = allTenants[0].id;
     }
 
+    // Brute-force protection: block after 10 failed attempts for an email in
+    // the last 15 minutes (tracked in the audit log).
+    const emailKey = data.email.toLowerCase();
+    const logFail = () =>
+      db.insert(auditLog).values({
+        tenantId: tenantId ?? null,
+        userId: null,
+        action: "login.fail",
+        entity: "login",
+        entityId: emailKey,
+      });
+    const recentFails =
+      (
+        await db
+          .select({ n: sql<number>`count(*)::int` })
+          .from(auditLog)
+          .where(
+            and(
+              eq(auditLog.action, "login.fail"),
+              eq(auditLog.entityId, emailKey),
+              gt(auditLog.createdAt, new Date(Date.now() - 15 * 60 * 1000)),
+            ),
+          )
+      )[0]?.n ?? 0;
+    if (recentFails >= 10) {
+      throw new Response(
+        "Too many failed attempts. Try again in a few minutes.",
+        { status: 429 },
+      );
+    }
+
     const row = await db
       .select()
       .from(users)
@@ -145,10 +176,14 @@ export const login = createServerFn({ method: "POST" })
 
     const user = row[0];
     if (!user || !user.isActive) {
+      await logFail();
       throw new Response("Invalid credentials", { status: 401 });
     }
     const ok = await verifyPassword(data.password, user.passwordHash);
-    if (!ok) throw new Response("Invalid credentials", { status: 401 });
+    if (!ok) {
+      await logFail();
+      throw new Response("Invalid credentials", { status: 401 });
+    }
 
     // Extra safety: nobody in the DB is ever treated as super admin.
     const isSuper = false;
@@ -351,8 +386,11 @@ export const me = createServerFn({ method: "GET" })
 
 /* -------------------- REGISTER (tenant admin bootstrap) -------------------- */
 export const registerTenantAdmin = createServerFn({ method: "POST" })
+  // SECURITY: authenticated + requires user-management permission. Without this
+  // gate anyone could POST a slug/email/password and mint an admin account.
+  .middleware([requireAccess({ perm: "users.create" })])
   .inputValidator((d: unknown) => registerInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { getDb } = await import("@/db/client.server");
     const { users, tenants, roles, userRoles } = await import("@/db/schema");
     const { hashPassword } = await import("./auth-core.server");
@@ -366,6 +404,10 @@ export const registerTenantAdmin = createServerFn({ method: "POST" })
         .limit(1)
     )[0];
     if (!tenant) throw new Response("Tenant not found", { status: 404 });
+    // Tenant binding: callers may only create admins within their own school.
+    if (!context.isSuperAdmin && context.tenantId !== tenant.id) {
+      throw new Response("Forbidden", { status: 403 });
+    }
 
     const existing = await db
       .select({ id: users.id })
@@ -426,7 +468,7 @@ export const forgotPassword = createServerFn({ method: "POST" })
     }
     const u = (
       await db
-        .select({ id: users.id })
+        .select({ id: users.id, tenantId: users.tenantId, firstName: users.firstName })
         .from(users)
         .where(
           and(
@@ -445,10 +487,23 @@ export const forgotPassword = createServerFn({ method: "POST" })
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
     });
 
-    // In production, email this link. For now return the URL so we can wire it in.
     const appUrl = process.env.APP_URL ?? "http://localhost:8080";
     const resetUrl = `${appUrl}/auth/reset?token=${token}`;
-    console.log("[password-reset]", data.email, resetUrl);
+
+    // Deliver the reset link by email. Only tenant users can receive it
+    // (email templating is per-tenant); the code-hardcoded super admin has no
+    // resettable password anyway.
+    if (u.tenantId) {
+      const { sendMail } = await import("./mailer.server");
+      const name = u.firstName ? `Hi ${u.firstName},` : "Hi,";
+      await sendMail({
+        tenantId: u.tenantId,
+        to: data.email,
+        subject: "Reset your password",
+        html: `<p>${name}</p><p>We received a request to reset your password. This link expires in 1 hour:</p><p><a href="${resetUrl}">Reset your password</a></p><p>If you didn't request this, you can safely ignore this email.</p>`,
+        text: `${name}\n\nReset your password (link expires in 1 hour):\n${resetUrl}\n\nIf you didn't request this, ignore this email.`,
+      });
+    }
     return { ok: true };
   });
 

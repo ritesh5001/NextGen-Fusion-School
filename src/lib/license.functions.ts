@@ -80,7 +80,7 @@ export const setLicenseKey = createServerFn({ method: "POST" })
       // Audit the failed attempt too (counts toward the rate limit).
       await db.insert(auditLog).values({
         tenantId,
-        userId: context.userId,
+        userId: context.isSuperAdmin ? null : context.userId,
         action: "license.activate",
         entity: "tenant",
         entityId: tenantId,
@@ -117,7 +117,7 @@ export const setLicenseKey = createServerFn({ method: "POST" })
 
     await db.insert(auditLog).values({
       tenantId,
-      userId: context.userId,
+      userId: context.isSuperAdmin ? null : context.userId,
       action: "license.activate",
       entity: "tenant",
       entityId: tenantId,

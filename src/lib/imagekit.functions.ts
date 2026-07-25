@@ -6,9 +6,11 @@
  * so the client can POST directly to ImageKit.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { requireAuth } from "./auth-middleware.server";
 
-export const getImageKitAuth = createServerFn({ method: "GET" }).handler(
-  async () => {
+export const getImageKitAuth = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .handler(async () => {
     const publicKey = process.env.IMAGEKIT_PUBLIC_KEY;
     const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
     const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT;

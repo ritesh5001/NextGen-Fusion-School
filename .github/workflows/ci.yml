@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sms
+          POSTGRES_PASSWORD: sms
+          POSTGRES_DB: sms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://sms:sms@localhost:5432/sms
+      TEST_DATABASE_URL: postgres://sms:sms@localhost:5432/sms
+      JWT_ACCESS_SECRET: ci-access-secret-please-rotate-in-production-0000000000000000
+      JWT_REFRESH_SECRET: ci-refresh-secret-please-rotate-in-production-000000000000000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Run migrations + seed
+        run: bun run db:setup
+
+      - name: Typecheck + build
+        run: bun run build
+
+      - name: Test (unit + integration)
+        run: bun run test

@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, ilike, or, sql, desc, asc } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId) throw new Response("Tenant scope required", { status: 400 });
@@ -18,7 +18,7 @@ const listInput = z.object({
 });
 
 export const listTeachers = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "teachers.read" })])
   .inputValidator((d: unknown) => listInput.parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -57,7 +57,7 @@ export const listTeachers = createServerFn({ method: "GET" })
 
 /** Lightweight list for dropdowns. */
 export const listTeachersLite = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "teachers.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -93,7 +93,7 @@ const upsertTeacherInput = z.object({
 });
 
 export const saveTeacher = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["teachers.create", "teachers.update", "teachers.delete"] })])
   .inputValidator((d: unknown) => upsertTeacherInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -129,7 +129,7 @@ export const saveTeacher = createServerFn({ method: "POST" })
   });
 
 export const deleteTeacher = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["teachers.create", "teachers.update", "teachers.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);

@@ -1615,6 +1615,10 @@ export const admissionApplications = pgTable(
     address: text("address"),
     previousSchool: text("previous_school"),
     remarks: text("remarks"),
+    // DPDP: verifiable parental consent captured at submission.
+    parentalConsent: boolean("parental_consent").notNull().default(false),
+    consentName: text("consent_name"),
+    consentAt: timestamp("consent_at", { withTimezone: true }),
     status: admissionStatus("status").notNull().default("pending"),
     reviewNote: text("review_note"),
     reviewedBy: uuid("reviewed_by").references(() => users.id, {

@@ -3,7 +3,8 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { and, eq, desc, sql } from "drizzle-orm";
+import { and, eq, desc, gt, sql } from "drizzle-orm";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
@@ -56,21 +57,48 @@ const submitSchema = z.object({
   address: z.string().max(500).optional().nullable(),
   previousSchool: z.string().max(200).optional().nullable(),
   remarks: z.string().max(1000).optional().nullable(),
+  // DPDP: verifiable parental consent is mandatory for a minor's application.
+  parentalConsent: z
+    .boolean()
+    .refine((v) => v === true, "Parental consent is required"),
+  consentName: z.string().min(2).max(120),
 });
 
 export const submitAdmission = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => submitSchema.parse(d))
   .handler(async ({ data }) => {
     const { getDb } = await import("@/db/client.server");
-    const { tenants, admissionApplications, academicYears } = await import(
-      "@/db/schema"
-    );
+    const { tenants, admissionApplications, academicYears, auditLog } =
+      await import("@/db/schema");
     const db = getDb();
     const [tenant] = await db
       .select({ id: tenants.id })
       .from(tenants)
       .where(eq(tenants.slug, data.tenantSlug));
     if (!tenant) throw new Response("School not found", { status: 404 });
+
+    // Abuse protection for this PUBLIC endpoint: max 5 submissions per IP per
+    // 10 minutes (tracked in the audit log). Add a CAPTCHA for stronger
+    // guarantees before high-traffic launch.
+    const ip =
+      getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ||
+      getRequestHeader("x-real-ip") ||
+      "unknown";
+    const recent = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.action, "admission.submit"),
+          eq(auditLog.entityId, ip),
+          gt(auditLog.createdAt, new Date(Date.now() - 10 * 60 * 1000)),
+        ),
+      );
+    if ((recent[0]?.n ?? 0) >= 5) {
+      throw new Response("Too many submissions. Please try again later.", {
+        status: 429,
+      });
+    }
     const [year] = await db
       .select({ id: academicYears.id })
       .from(academicYears)
@@ -103,9 +131,20 @@ export const submitAdmission = createServerFn({ method: "POST" })
         address: data.address ?? null,
         previousSchool: data.previousSchool ?? null,
         remarks: data.remarks ?? null,
+        parentalConsent: true,
+        consentName: data.consentName,
+        consentAt: new Date(),
         status: "pending",
       })
       .returning({ id: admissionApplications.id });
+
+    await db.insert(auditLog).values({
+      tenantId: tenant.id,
+      action: "admission.submit",
+      entity: "admission",
+      entityId: ip,
+    });
+
     return { id: row.id, applicationNo };
   });
 

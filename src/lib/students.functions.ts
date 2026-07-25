@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, ilike, or, sql, desc } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId) throw new Response("Tenant scope required", { status: 400 });
@@ -20,7 +20,7 @@ const listInput = z.object({
 });
 
 export const listStudents = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "students.read" })])
   .inputValidator((d: unknown) => listInput.parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -99,7 +99,7 @@ const upsertStudentInput = z.object({
 });
 
 export const saveStudent = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["students.create", "students.update", "students.delete"] })])
   .inputValidator((d: unknown) => upsertStudentInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -140,18 +140,29 @@ export const saveStudent = createServerFn({ method: "POST" })
 
     // Enforce the per-plan active-student cap on new admissions. During the
     // 14-day trial the effective plan is Max, so the cap is unlimited.
-    const { readEntitlement, countActiveStudents } = await import(
-      "./entitlements.server"
-    );
+    const { readEntitlement } = await import("./entitlements.server");
     const ent = await readEntitlement(tid);
+
     if (ent.studentCap != null) {
-      const count = await countActiveStudents(tid);
-      if (count >= ent.studentCap) {
-        throw new Response(
-          `Your ${ent.effectivePlan.toUpperCase()} plan is limited to ${ent.studentCap} students. Upgrade to add more.`,
-          { status: 403 },
-        );
-      }
+      const cap = ent.studentCap;
+      // Serialize count-then-insert per tenant with a transaction-scoped
+      // advisory lock so concurrent admissions can't both slip past the cap.
+      const created = await db.transaction(async (tx) => {
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${tid}))`);
+        const [{ n }] = await tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(students)
+          .where(and(eq(students.tenantId, tid), eq(students.isActive, true)));
+        if (n >= cap) {
+          throw new Response(
+            `Your ${ent.effectivePlan.toUpperCase()} plan is limited to ${cap} students. Upgrade to add more.`,
+            { status: 403 },
+          );
+        }
+        const [r] = await tx.insert(students).values(payload).returning();
+        return r;
+      });
+      return { ok: true, id: created.id };
     }
 
     const [row] = await db.insert(students).values(payload).returning();
@@ -159,7 +170,7 @@ export const saveStudent = createServerFn({ method: "POST" })
   });
 
 export const deleteStudent = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["students.create", "students.update", "students.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -169,11 +180,19 @@ export const deleteStudent = createServerFn({ method: "POST" })
     await db
       .delete(students)
       .where(and(eq(students.id, data.id), eq(students.tenantId, tid)));
+    const { writeAudit } = await import("./audit.server");
+    await writeAudit({
+      tenantId: tid,
+      userId: context.userId,
+      action: "student.delete",
+      entity: "student",
+      entityId: data.id,
+    });
     return { ok: true };
   });
 
 export const getStudent = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "students.read" })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -193,7 +212,7 @@ export const getStudent = createServerFn({ method: "GET" })
 
 /** Active-student count vs the plan cap — powers the usage meter / upsell. */
 export const getStudentUsage = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "students.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { readEntitlement, countActiveStudents } = await import(

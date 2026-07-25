@@ -68,6 +68,8 @@ function ApplyPage() {
     address: "",
     previousSchool: "",
     remarks: "",
+    consentName: "",
+    parentalConsent: false,
   });
 
   useEffect(() => {
@@ -80,6 +82,10 @@ function ApplyPage() {
     e.preventDefault();
     if (!form.firstName || !form.guardianPhone) {
       setError("Applicant name and guardian phone are required");
+      return;
+    }
+    if (!form.parentalConsent || form.consentName.trim().length < 2) {
+      setError("Parent/guardian consent (with your full name) is required");
       return;
     }
     setBusy(true);
@@ -99,6 +105,8 @@ function ApplyPage() {
           address: form.address || null,
           previousSchool: form.previousSchool || null,
           remarks: form.remarks || null,
+          parentalConsent: form.parentalConsent,
+          consentName: form.consentName,
         },
       });
       setSubmitted({ applicationNo: res.applicationNo });
@@ -308,6 +316,38 @@ function ApplyPage() {
                 />
               </div>
             </div>
+          </section>
+
+          <section className="rounded-lg border border-border bg-muted/30 p-4">
+            <h3 className="mb-2 text-sm font-semibold">Parent / guardian consent</h3>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Under the Digital Personal Data Protection Act, we need a
+              parent/guardian&apos;s consent to process this child&apos;s personal
+              data for admission.
+            </p>
+            <div className="mb-3">
+              <Label>Parent / guardian full name</Label>
+              <input
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={form.consentName}
+                onChange={(e) => setForm({ ...form, consentName: e.target.value })}
+              />
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={form.parentalConsent}
+                onChange={(e) =>
+                  setForm({ ...form, parentalConsent: e.target.checked })
+                }
+              />
+              <span>
+                I am the parent/legal guardian of this applicant and I consent to
+                the collection and processing of the personal data provided in
+                this form for the purpose of admission and enrolment.
+              </span>
+            </label>
           </section>
 
           {error && (

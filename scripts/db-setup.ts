@@ -76,9 +76,11 @@ async function main() {
     { key: "teacher", name: "Teacher", description: "Manage assigned classes",
       perms: ["students.read", "attendance.create", "attendance.read", "attendance.update", "marks.create", "marks.read", "marks.update", "exams.read", "notices.read", "calendar.read"] },
     { key: "accountant", name: "Accountant", description: "Manages fees, payroll, ledger",
-      perms: ["fees.*", "accounts.*", "payroll.*", "reports.read"] },
+      // students.read: fee collection needs to look up and pick students.
+      perms: ["fees.*", "accounts.*", "payroll.*", "reports.read", "students.read"] },
     { key: "hr", name: "HR Manager", description: "Employee lifecycle",
-      perms: ["hr.*", "payroll.read"] },
+      // attendance.read: HR views employee attendance.
+      perms: ["hr.*", "payroll.read", "attendance.read"] },
     { key: "librarian", name: "Librarian", description: "Library operations",
       perms: ["library.*", "students.read", "teachers.read"] },
     { key: "hostel_warden", name: "Hostel Warden", description: "Hostel management",

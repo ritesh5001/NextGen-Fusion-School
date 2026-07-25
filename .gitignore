@@ -35,5 +35,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# License signing keys — NEVER commit the private key
+.keys/
+*.b64
 # Claude Code local settings
 .claude/settings.local.json

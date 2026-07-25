@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, desc, sql, inArray } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId)
@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 
 /* ================== FEE HEADS ================== */
 export const listFeeHeads = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "fees.read" })])
   .handler(async ({ context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
@@ -37,7 +37,7 @@ const upsertHead = z.object({
 });
 
 export const saveFeeHead = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => upsertHead.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -73,7 +73,7 @@ export const saveFeeHead = createServerFn({ method: "POST" })
   });
 
 export const deleteFeeHead = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -88,7 +88,7 @@ export const deleteFeeHead = createServerFn({ method: "POST" })
 
 /* ================== FEE STRUCTURES ================== */
 export const listFeeStructures = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "fees.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -136,7 +136,7 @@ const upsertStruct = z.object({
 });
 
 export const saveFeeStructure = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => upsertStruct.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -176,7 +176,7 @@ export const saveFeeStructure = createServerFn({ method: "POST" })
   });
 
 export const deleteFeeStructure = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -205,7 +205,7 @@ async function nextInvoiceNo(db: any, tid: string): Promise<string> {
 }
 
 export const listInvoices = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "fees.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -258,7 +258,7 @@ export const listInvoices = createServerFn({ method: "GET" })
   });
 
 export const getInvoice = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "fees.read" })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -305,7 +305,7 @@ const createInvoiceInput = z.object({
 });
 
 export const createInvoice = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => createInvoiceInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -344,7 +344,7 @@ export const createInvoice = createServerFn({ method: "POST" })
   });
 
 export const cancelInvoice = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -370,7 +370,7 @@ const recordPaymentInput = z.object({
 });
 
 export const recordPayment = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => recordPaymentInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -381,58 +381,68 @@ export const recordPayment = createServerFn({ method: "POST" })
       accountTransactions,
     } = await import("@/db/schema");
     const db = getDb();
-    const [inv] = await db
-      .select()
-      .from(feeInvoices)
-      .where(
-        and(eq(feeInvoices.id, data.invoiceId), eq(feeInvoices.tenantId, tid)),
-      );
-    if (!inv) throw new Response("Invoice not found", { status: 404 });
-    if (inv.status === "cancelled")
-      throw new Response("Invoice is cancelled", { status: 400 });
+    // Atomic: the payment, the invoice balance update, and the ledger entry
+    // either all commit or all roll back — no half-recorded money.
+    const pay = await db.transaction(async (tx) => {
+      const [inv] = await tx
+        .select()
+        .from(feeInvoices)
+        .where(
+          and(eq(feeInvoices.id, data.invoiceId), eq(feeInvoices.tenantId, tid)),
+        );
+      if (!inv) throw new Response("Invoice not found", { status: 404 });
+      if (inv.status === "cancelled")
+        throw new Response("Invoice is cancelled", { status: 400 });
 
-    const [pay] = await db
-      .insert(feePayments)
-      .values({
-        tenantId: tid,
-        invoiceId: inv.id,
-        amount: data.amount,
-        method: data.method,
-        reference: data.reference ?? null,
-        paidOn: data.paidOn,
-        remarks: data.remarks ?? null,
-      })
-      .returning();
+      const [p] = await tx
+        .insert(feePayments)
+        .values({
+          tenantId: tid,
+          invoiceId: inv.id,
+          amount: data.amount,
+          method: data.method,
+          reference: data.reference ?? null,
+          paidOn: data.paidOn,
+          remarks: data.remarks ?? null,
+        })
+        .returning();
 
-    const newPaid = inv.paidAmount + data.amount;
-    const status =
-      newPaid >= inv.totalAmount
-        ? "paid"
-        : newPaid > 0
-          ? "partial"
-          : "unpaid";
-    await db
-      .update(feeInvoices)
-      .set({ paidAmount: newPaid, status, updatedAt: new Date() })
-      .where(eq(feeInvoices.id, inv.id));
+      const newPaid = inv.paidAmount + data.amount;
+      const status =
+        newPaid >= inv.totalAmount ? "paid" : newPaid > 0 ? "partial" : "unpaid";
+      await tx
+        .update(feeInvoices)
+        .set({ paidAmount: newPaid, status, updatedAt: new Date() })
+        .where(eq(feeInvoices.id, inv.id));
 
-    if (data.postToAccountHeadId) {
-      await db.insert(accountTransactions).values({
-        tenantId: tid,
-        accountHeadId: data.postToAccountHeadId,
-        kind: "income",
-        txDate: data.paidOn,
-        amount: data.amount,
-        description: `Fee payment ${inv.invoiceNo}`,
-        reference: data.reference ?? null,
-        feePaymentId: pay.id,
-      });
-    }
+      if (data.postToAccountHeadId) {
+        await tx.insert(accountTransactions).values({
+          tenantId: tid,
+          accountHeadId: data.postToAccountHeadId,
+          kind: "income",
+          txDate: data.paidOn,
+          amount: data.amount,
+          description: `Fee payment ${inv.invoiceNo}`,
+          reference: data.reference ?? null,
+          feePaymentId: p.id,
+        });
+      }
+      return p;
+    });
+    const { writeAudit } = await import("./audit.server");
+    await writeAudit({
+      tenantId: tid,
+      userId: context.userId,
+      action: "fee.payment",
+      entity: "invoice",
+      entityId: data.invoiceId,
+      meta: { amount: data.amount, method: data.method },
+    });
     return pay;
   });
 
 export const cancelPayment = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -471,7 +481,7 @@ export const cancelPayment = createServerFn({ method: "POST" })
 
 /* ================== BULK GENERATE ================== */
 export const generateInvoicesFromStructure = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["fees.create", "fees.update", "fees.delete"] })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -565,7 +575,7 @@ export const generateInvoicesFromStructure = createServerFn({ method: "POST" })
 
 /* ================== DUE REPORT ================== */
 export const dueReport = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "fees.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({

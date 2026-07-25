@@ -149,6 +149,16 @@ export const saveMarks = createServerFn({ method: "POST" })
           updatedAt: new Date(),
         },
       });
+    // Grade changes are sensitive — record an audit trail.
+    const { writeAudit } = await import("./audit.server");
+    await writeAudit({
+      tenantId: tid,
+      userId: context.userId,
+      action: "marks.update",
+      entity: "examSubject",
+      entityId: data.examSubjectId,
+      meta: { count: values.length },
+    });
     return { ok: true, count: values.length };
   });
 

@@ -4,7 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { and, eq, sql, asc, inArray, gte, lte } from "drizzle-orm";
-import { requireAuth } from "./auth-middleware.server";
+import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
   if (!context.tenantId) throw new Response("Tenant scope required", { status: 400 });
@@ -18,7 +18,7 @@ const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD required");
 
 /** Roster + existing marks for a given section and date. */
 export const getStudentAttendance = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "attendance.read" })])
   .inputValidator((d: unknown) =>
     z.object({ sectionId: z.string().uuid(), date: dateStr }).parse(d),
   )
@@ -92,7 +92,7 @@ const markInput = z.object({
 });
 
 export const markStudentAttendance = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["attendance.create", "attendance.update", "attendance.delete"] })])
   .inputValidator((d: unknown) => markInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -127,7 +127,7 @@ export const markStudentAttendance = createServerFn({ method: "POST" })
 
 /** Monthly summary: per-student totals for a section within [start,end]. */
 export const monthlyStudentReport = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "attendance.read" })])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -192,7 +192,7 @@ export const monthlyStudentReport = createServerFn({ method: "GET" })
 /* ============= EMPLOYEE ATTENDANCE ============= */
 
 export const getEmployeeAttendance = createServerFn({ method: "GET" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ perm: "attendance.read" })])
   .inputValidator((d: unknown) => z.object({ date: dateStr }).parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
@@ -260,7 +260,7 @@ const markEmpInput = z.object({
 });
 
 export const markEmployeeAttendance = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
+  .middleware([requireAccess({ anyPerm: ["attendance.create", "attendance.update", "attendance.delete"] })])
   .inputValidator((d: unknown) => markEmpInput.parse(d))
   .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
