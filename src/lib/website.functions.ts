@@ -166,6 +166,16 @@ export const submitContactMessage = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { clientIp, enforceIpRateLimit, recordIpEvent } = await import(
+      "./rate-limit.server"
+    );
+    const ip = clientIp();
+    await enforceIpRateLimit({
+      action: "contact.submit",
+      ip,
+      max: 5,
+      windowMs: 10 * 60 * 1000,
+    });
     const { getDb } = await import("@/db/client.server");
     const { tenants, contactMessages } = await import("@/db/schema");
     const db = getDb();
@@ -185,6 +195,7 @@ export const submitContactMessage = createServerFn({ method: "POST" })
       subject: data.subject || null,
       message: data.message,
     });
+    await recordIpEvent({ tenantId: t.id, action: "contact.submit", ip });
     return { ok: true };
   });
 
@@ -198,6 +209,16 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { clientIp, enforceIpRateLimit, recordIpEvent } = await import(
+      "./rate-limit.server"
+    );
+    const ip = clientIp();
+    await enforceIpRateLimit({
+      action: "newsletter.subscribe",
+      ip,
+      max: 10,
+      windowMs: 10 * 60 * 1000,
+    });
     const { getDb } = await import("@/db/client.server");
     const { tenants, newsletterSubscribers } = await import("@/db/schema");
     const db = getDb();
@@ -217,6 +238,7 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
     } catch {
       // already subscribed — treat as success
     }
+    await recordIpEvent({ tenantId: t.id, action: "newsletter.subscribe", ip });
     return { ok: true };
   });
 

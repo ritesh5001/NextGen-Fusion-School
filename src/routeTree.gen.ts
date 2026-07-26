@@ -43,6 +43,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppStudentsRouteImport } from './routes/app.students'
 import { Route as AppSubjectsRouteImport } from './routes/app.subjects'
 import { Route as AppTeachersRouteImport } from './routes/app.teachers'
+import { Route as AppUpgradeRouteImport } from './routes/app.upgrade'
 import { Route as AppUsersRouteImport } from './routes/app.users'
 import { Route as AppWebsiteRouteImport } from './routes/app.website'
 import { Route as ApplySlugRouteImport } from './routes/apply.$slug'
@@ -225,6 +226,11 @@ const AppTeachersRoute = AppTeachersRouteImport.update({
   path: '/teachers',
   getParentRoute: () => AppRoute,
 } as any)
+const AppUpgradeRoute = AppUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppUsersRoute = AppUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -316,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
+  '/app/upgrade': typeof AppUpgradeRoute
   '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
@@ -362,6 +369,7 @@ export interface FileRoutesByTo {
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
+  '/app/upgrade': typeof AppUpgradeRoute
   '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
@@ -410,6 +418,7 @@ export interface FileRoutesById {
   '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
+  '/app/upgrade': typeof AppUpgradeRoute
   '/app/users': typeof AppUsersRoute
   '/app/website': typeof AppWebsiteRoute
   '/apply/$slug': typeof ApplySlugRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
+    | '/app/upgrade'
     | '/app/users'
     | '/app/website'
     | '/apply/$slug'
@@ -505,6 +515,7 @@ export interface FileRouteTypes {
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
+    | '/app/upgrade'
     | '/app/users'
     | '/app/website'
     | '/apply/$slug'
@@ -552,6 +563,7 @@ export interface FileRouteTypes {
     | '/app/students'
     | '/app/subjects'
     | '/app/teachers'
+    | '/app/upgrade'
     | '/app/users'
     | '/app/website'
     | '/apply/$slug'
@@ -823,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeachersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/upgrade': {
+      id: '/app/upgrade'
+      path: '/upgrade'
+      fullPath: '/app/upgrade'
+      preLoaderRoute: typeof AppUpgradeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/users': {
       id: '/app/users'
       path: '/users'
@@ -932,6 +951,7 @@ interface AppRouteChildren {
   AppStudentsRoute: typeof AppStudentsRoute
   AppSubjectsRoute: typeof AppSubjectsRoute
   AppTeachersRoute: typeof AppTeachersRoute
+  AppUpgradeRoute: typeof AppUpgradeRoute
   AppUsersRoute: typeof AppUsersRoute
   AppWebsiteRoute: typeof AppWebsiteRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -966,6 +986,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppStudentsRoute: AppStudentsRoute,
   AppSubjectsRoute: AppSubjectsRoute,
   AppTeachersRoute: AppTeachersRoute,
+  AppUpgradeRoute: AppUpgradeRoute,
   AppUsersRoute: AppUsersRoute,
   AppWebsiteRoute: AppWebsiteRoute,
   AppIndexRoute: AppIndexRoute,

@@ -76,11 +76,11 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         id: admissionApplications.id,
         name: sql<string>`${admissionApplications.firstName} || ' ' || coalesce(${admissionApplications.lastName}, '')`,
         status: admissionApplications.status,
-        createdAt: admissionApplications.createdAt,
+        createdAt: admissionApplications.submittedAt,
       })
       .from(admissionApplications)
       .where(eq(admissionApplications.tenantId, tid))
-      .orderBy(desc(admissionApplications.createdAt))
+      .orderBy(desc(admissionApplications.submittedAt))
       .limit(5);
 
     const upcomingEvents = await db

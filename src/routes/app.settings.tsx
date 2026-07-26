@@ -565,7 +565,7 @@ function LicensePanel() {
             <Row label="Institution" value={p?.institution} />
             <Row label="Plan" value={p?.planLabel} />
             <Row label="Issued" value={p?.issuedAt} />
-            <Row label="Expires" value={p?.expiresAt ?? "Perpetual"} />
+            <Row label="Expires" value="Never (perpetual license)" />
             <Row label="Max students" value={p?.maxStudents ? String(p.maxStudents) : "Unlimited"} />
             <Row label="Features" value={(p?.features ?? []).join(", ") || "*"} />
             {st.expiresInDays != null && (
