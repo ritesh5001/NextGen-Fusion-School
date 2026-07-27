@@ -14,6 +14,8 @@ import {
   ClipboardList,
   CalendarCheck,
   FileSpreadsheet,
+  BarChart3,
+  ArrowRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -121,6 +123,14 @@ function ReportsPage() {
       <PageHeader
         title="Reports"
         description="Institution-wide snapshot and quick jumps to every module"
+        action={
+          <Link
+            to="/app/analytics"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
+            <BarChart3 className="size-4" /> Open Analytics <ArrowRight className="size-3.5" />
+          </Link>
+        }
       />
 
       {s && (
