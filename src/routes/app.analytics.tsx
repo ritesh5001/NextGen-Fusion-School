@@ -117,26 +117,44 @@ function AcademicTab() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Grade distribution */}
         <Card title="Grade distribution" subtitle="Share of assessment results by grade band">
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={data.gradeDistribution}
-                dataKey="count"
-                nameKey="grade"
-                innerRadius={55}
-                outerRadius={90}
-                paddingAngle={2}
-                strokeWidth={2}
-                stroke="var(--card, #fff)"
-              >
-                {data.gradeDistribution.map((g) => (
-                  <Cell key={g.grade} fill={GRADE_COLORS[g.grade] ?? "#94a3b8"} />
-                ))}
-                <LabelList dataKey="grade" position="outside" className="fill-foreground text-xs" />
-              </Pie>
-              <Tooltip content={<ChartTip unit=" results" />} />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={data.gradeDistribution}
+                  dataKey="count"
+                  nameKey="grade"
+                  innerRadius={52}
+                  outerRadius={88}
+                  paddingAngle={2}
+                  strokeWidth={2}
+                  stroke="var(--card, #fff)"
+                >
+                  {data.gradeDistribution.map((g) => (
+                    <Cell key={g.grade} fill={GRADE_COLORS[g.grade] ?? "#94a3b8"} />
+                  ))}
+                </Pie>
+                <Tooltip content={<ChartTip unit=" results" />} />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Legend — grade identity is never color-alone */}
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs sm:grid-cols-1">
+              {[...data.gradeDistribution]
+                .sort((a, b) => ["A+","A","B+","B","C","D","F"].indexOf(a.grade) - ["A+","A","B+","B","C","D","F"].indexOf(b.grade))
+                .map((g) => {
+                  const total = data.gradeDistribution.reduce((s, x) => s + x.count, 0) || 1;
+                  return (
+                    <li key={g.grade} className="flex items-center gap-2">
+                      <span className="inline-block size-2.5 rounded-sm" style={{ background: GRADE_COLORS[g.grade] ?? "#94a3b8" }} />
+                      <span className="font-medium">{g.grade}</span>
+                      <span className="text-muted-foreground">
+                        {g.count} · {Math.round((g.count / total) * 100)}%
+                      </span>
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
         </Card>
 
         {/* Subject averages */}
