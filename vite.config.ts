@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Build a standalone Node HTTP server (serves its own static assets) instead
+  // of the default Cloudflare Workers preset. Required for Docker/Render, where
+  // there is no Cloudflare ASSETS binding to serve /assets/* — without this the
+  // client bundle 404s and the app is stuck on "Loading…".
+  nitro: { preset: "node-server" },
 });
