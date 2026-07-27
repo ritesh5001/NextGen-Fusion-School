@@ -49,6 +49,7 @@ import { Route as AppClassesRouteImport } from './routes/app.classes'
 import { Route as AppCalendarRouteImport } from './routes/app.calendar'
 import { Route as AppAttendanceRouteImport } from './routes/app.attendance'
 import { Route as AppAppearanceRouteImport } from './routes/app.appearance'
+import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAdmissionsRouteImport } from './routes/app.admissions'
 import { Route as AppAccountsRouteImport } from './routes/app.accounts'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
@@ -257,6 +258,11 @@ const AppAppearanceRoute = AppAppearanceRouteImport.update({
   path: '/appearance',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdmissionsRoute = AppAdmissionsRouteImport.update({
   id: '/admissions',
   path: '/admissions',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/appearance': typeof AppAppearanceRoute
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
@@ -352,6 +359,7 @@ export interface FileRoutesByTo {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/appearance': typeof AppAppearanceRoute
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
@@ -402,6 +410,7 @@ export interface FileRoutesById {
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/appearance': typeof AppAppearanceRoute
   '/app/attendance': typeof AppAttendanceRoute
   '/app/calendar': typeof AppCalendarRoute
@@ -453,6 +462,7 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
+    | '/app/analytics'
     | '/app/appearance'
     | '/app/attendance'
     | '/app/calendar'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
+    | '/app/analytics'
     | '/app/appearance'
     | '/app/attendance'
     | '/app/calendar'
@@ -550,6 +561,7 @@ export interface FileRouteTypes {
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
+    | '/app/analytics'
     | '/app/appearance'
     | '/app/attendance'
     | '/app/calendar'
@@ -890,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppearanceRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/analytics': {
+      id: '/app/analytics'
+      path: '/analytics'
+      fullPath: '/app/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/admissions': {
       id: '/app/admissions'
       path: '/admissions'
@@ -946,6 +965,7 @@ interface AppRouteChildren {
   AppAcademicYearsRoute: typeof AppAcademicYearsRoute
   AppAccountsRoute: typeof AppAccountsRoute
   AppAdmissionsRoute: typeof AppAdmissionsRoute
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppearanceRoute: typeof AppAppearanceRoute
   AppAttendanceRoute: typeof AppAttendanceRoute
   AppCalendarRoute: typeof AppCalendarRoute
@@ -981,6 +1001,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAcademicYearsRoute: AppAcademicYearsRoute,
   AppAccountsRoute: AppAccountsRoute,
   AppAdmissionsRoute: AppAdmissionsRoute,
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppearanceRoute: AppAppearanceRoute,
   AppAttendanceRoute: AppAttendanceRoute,
   AppCalendarRoute: AppCalendarRoute,

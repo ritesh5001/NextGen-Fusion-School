@@ -49,6 +49,7 @@ export const MODULE_MIN_PLAN: Record<string, PlanTier> = {
   "/app/id-cards": "pro",
   "/app/admissions": "pro",
   "/app/reports": "pro",
+  "/app/analytics": "pro",
   "/app/notifications": "pro",
   // ── Max unlocks: staff / operations suite ──
   "/app/hrm": "max",

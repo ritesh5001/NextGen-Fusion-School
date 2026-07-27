@@ -25,6 +25,7 @@ import {
   Lock,
   Palette,
   Sparkles,
+  BarChart3,
   ArrowRight,
 } from "lucide-react";
 
@@ -95,6 +96,7 @@ const nav: NavGroup[] = [
       { to: "/app/notices", label: "Notice Board", icon: Megaphone },
       { to: "/app/admissions", label: "Online Admissions", icon: ClipboardList },
       { to: "/app/reports", label: "Reports", icon: ClipboardList },
+      { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/app/notifications", label: "Notifications", icon: Bell },
     ],
   },
