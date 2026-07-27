@@ -6,7 +6,8 @@
  * Gated on `reports.read` (admins + principal) at the Pro tier.
  */
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { z } from "zod";
 import { requireAccess } from "./auth-middleware.server";
 
 function tenantOf(context: { tenantId: string | null }) {
@@ -14,6 +15,12 @@ function tenantOf(context: { tenantId: string | null }) {
     throw new Response("Tenant scope required", { status: 400 });
   return context.tenantId;
 }
+
+/** Optional YYYY-MM-DD date range. Empty means "all time". */
+const periodInput = z
+  .object({ from: z.string().optional(), to: z.string().optional() })
+  .optional()
+  .transform((v) => v ?? {});
 
 /* ============================ ACADEMIC ============================ */
 
@@ -185,11 +192,19 @@ export const getAcademicAnalytics = createServerFn({ method: "GET" })
 
 export const getAttendanceAnalytics = createServerFn({ method: "GET" })
   .middleware([requireAccess({ plan: "pro", perm: "reports.read" })])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => periodInput.parse(d))
+  .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
     const { studentAttendance, sections, classes, students } = await import("@/db/schema");
     const db = getDb();
+
+    // Period filter on the text date column (YYYY-MM-DD sorts lexically).
+    const inPeriod = and(
+      eq(studentAttendance.tenantId, tid),
+      data.from ? gte(studentAttendance.date, data.from) : undefined,
+      data.to ? lte(studentAttendance.date, data.to) : undefined,
+    );
 
     const present = sql<number>`COUNT(*) FILTER (WHERE ${studentAttendance.status} = 'present')`;
     const total = sql<number>`COUNT(*)`;
@@ -205,7 +220,7 @@ export const getAttendanceAnalytics = createServerFn({ method: "GET" })
         days: sql<number>`COUNT(DISTINCT ${studentAttendance.date})::int`,
       })
       .from(studentAttendance)
-      .where(eq(studentAttendance.tenantId, tid));
+      .where(inPeriod);
 
     // 2. Daily trend — present % per date (last 30 recorded days).
     const dailyTrend = await db
@@ -214,7 +229,7 @@ export const getAttendanceAnalytics = createServerFn({ method: "GET" })
         pct: sql<number>`ROUND((${present}::float / NULLIF(${total},0) * 100)::numeric, 1)`,
       })
       .from(studentAttendance)
-      .where(eq(studentAttendance.tenantId, tid))
+      .where(inPeriod)
       .groupBy(studentAttendance.date)
       .orderBy(studentAttendance.date);
 
@@ -228,7 +243,7 @@ export const getAttendanceAnalytics = createServerFn({ method: "GET" })
       .from(studentAttendance)
       .innerJoin(sections, eq(studentAttendance.sectionId, sections.id))
       .innerJoin(classes, eq(sections.classId, classes.id))
-      .where(eq(studentAttendance.tenantId, tid))
+      .where(inPeriod)
       .groupBy(classes.name, classes.numericGrade)
       .orderBy(classes.numericGrade);
 
@@ -245,7 +260,7 @@ export const getAttendanceAnalytics = createServerFn({ method: "GET" })
       .from(studentAttendance)
       .innerJoin(students, eq(studentAttendance.studentId, students.id))
       .leftJoin(classes, eq(students.classId, classes.id))
-      .where(eq(studentAttendance.tenantId, tid))
+      .where(inPeriod)
       .groupBy(students.firstName, students.lastName, students.rollNo, classes.name)
       .having(sql`COUNT(*) >= 3`)
       .orderBy(sql`(${present}::float / NULLIF(${total},0))`)
@@ -285,12 +300,21 @@ export const getAttendanceAnalytics = createServerFn({ method: "GET" })
 
 export const getFinanceAnalytics = createServerFn({ method: "GET" })
   .middleware([requireAccess({ plan: "pro", perm: "reports.read" })])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => periodInput.parse(d))
+  .handler(async ({ data, context }) => {
     const tid = tenantOf(context);
     const { getDb } = await import("@/db/client.server");
     const { feeInvoices, feePayments, feeInvoiceItems, feeHeads, students, classes } =
       await import("@/db/schema");
     const db = getDb();
+
+    // Period filter for payment queries (paid_on is a text YYYY-MM-DD date).
+    const paidInPeriod = and(
+      eq(feePayments.tenantId, tid),
+      eq(feePayments.isCancelled, false),
+      data.from ? gte(feePayments.paidOn, data.from) : undefined,
+      data.to ? lte(feePayments.paidOn, data.to) : undefined,
+    );
 
     // 1. KPIs: billed, collected, outstanding, collection rate.
     const [agg] = await db
@@ -312,7 +336,7 @@ export const getFinanceAnalytics = createServerFn({ method: "GET" })
         amount: sql<number>`COALESCE(SUM(${feePayments.amount}),0)::int`,
       })
       .from(feePayments)
-      .where(and(eq(feePayments.tenantId, tid), eq(feePayments.isCancelled, false)))
+      .where(paidInPeriod)
       .groupBy(sql`to_char(${feePayments.paidOn}::date, 'YYYY-MM')`)
       .orderBy(sql`to_char(${feePayments.paidOn}::date, 'YYYY-MM')`);
 
@@ -335,7 +359,7 @@ export const getFinanceAnalytics = createServerFn({ method: "GET" })
         amount: sql<number>`COALESCE(SUM(${feePayments.amount}),0)::int`,
       })
       .from(feePayments)
-      .where(and(eq(feePayments.tenantId, tid), eq(feePayments.isCancelled, false)))
+      .where(paidInPeriod)
       .groupBy(feePayments.method)
       .orderBy(sql`SUM(${feePayments.amount}) DESC`);
 

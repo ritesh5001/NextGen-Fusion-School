@@ -6,7 +6,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, LabelList,
 } from "recharts";
 import { Area, AreaChart } from "recharts";
-import { GraduationCap, CalendarCheck, Wallet, Users } from "lucide-react";
+import { GraduationCap, CalendarCheck, Wallet, Users, Download, Printer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import {
   getAcademicAnalytics,
@@ -15,6 +15,7 @@ import {
   getEnrollmentAnalytics,
 } from "@/lib/analytics.functions";
 import { getSession } from "@/lib/session";
+import { downloadCsv, printToPdf } from "@/lib/export-utils";
 
 const inr = (n: number) => "₹" + n.toLocaleString("en-IN");
 const inrCompact = (n: number) =>
@@ -47,9 +48,23 @@ const TABS = [
   { key: "enrollment", label: "Enrollment" },
 ] as const;
 
+export type Period = { from?: string; to?: string };
+
+const PERIOD_PRESETS: { key: string; label: string; range: () => Period }[] = [
+  { key: "all", label: "All time", range: () => ({}) },
+  { key: "30d", label: "Last 30 days", range: () => ({ from: daysAgo(30), to: today() }) },
+  { key: "90d", label: "Last 90 days", range: () => ({ from: daysAgo(90), to: today() }) },
+  { key: "year", label: "This year", range: () => ({ from: `${new Date().getFullYear()}-01-01`, to: today() }) },
+];
+function today() { return new Date().toISOString().slice(0, 10); }
+function daysAgo(n: number) { return new Date(Date.now() - n * 86400000).toISOString().slice(0, 10); }
+
 function AnalyticsPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("academic");
+  const [presetKey, setPresetKey] = useState("all");
+  const period = PERIOD_PRESETS.find((p) => p.key === presetKey)!.range();
+  const periodTabs = tab === "attendance" || tab === "finance";
 
   // Gate: admins + principal (reports.read). Others bounced to /app.
   const perms = getSession()?.user?.perms ?? [];
@@ -64,13 +79,30 @@ function AnalyticsPage() {
   if (!canView) return null;
 
   return (
-    <div className="p-8">
-      <PageHeader
-        title="Analytics"
-        description="Institution-wide insights across academics, attendance, finance, and enrollment."
-      />
+    <div className="p-8" data-print-region>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          title="Analytics"
+          description="Institution-wide insights across academics, attendance, finance, and enrollment."
+        />
+        {/* Period filter — only for time-based tabs */}
+        {periodTabs && (
+          <div className="flex items-center gap-2" data-print-hide>
+            <span className="text-xs text-muted-foreground">Period:</span>
+            <select
+              value={presetKey}
+              onChange={(e) => setPresetKey(e.target.value)}
+              className="rounded-md border border-border bg-background px-2.5 py-1.5 text-sm"
+            >
+              {PERIOD_PRESETS.map((p) => (
+                <option key={p.key} value={p.key}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-border">
+      <div className="mb-6 flex flex-wrap gap-1 border-b border-border" data-print-hide>
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -87,9 +119,29 @@ function AnalyticsPage() {
       </div>
 
       {tab === "academic" && <AcademicTab />}
-      {tab === "attendance" && <AttendanceTab />}
-      {tab === "finance" && <FinanceTab />}
+      {tab === "attendance" && <AttendanceTab period={period} />}
+      {tab === "finance" && <FinanceTab period={period} />}
       {tab === "enrollment" && <EnrollmentTab />}
+    </div>
+  );
+}
+
+/* Export toolbar shared by tabs. */
+function ExportBar({ onCsv }: { onCsv: () => void }) {
+  return (
+    <div className="flex justify-end gap-2" data-print-hide>
+      <button
+        onClick={onCsv}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-border-strong"
+      >
+        <Download className="size-3.5" /> Export CSV
+      </button>
+      <button
+        onClick={() => printToPdf()}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-border-strong"
+      >
+        <Printer className="size-3.5" /> Export PDF
+      </button>
     </div>
   );
 }
@@ -97,6 +149,7 @@ function AnalyticsPage() {
 /* ---------------------------- Academic tab ---------------------------- */
 
 function AcademicTab() {
+  const navigate = useNavigate();
   const load = useServerFn(getAcademicAnalytics);
   const [data, setData] = useState<Academic | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,8 +172,22 @@ function AcademicTab() {
     );
   }
 
+  function exportCsv() {
+    downloadCsv("academic-analytics", [
+      { title: "Key metrics", headers: ["Metric", "Value"], rows: [
+        ["Average score %", data!.kpi.avgPercent], ["Pass rate %", data!.kpi.passRate],
+        ["Assessments graded", data!.kpi.assessments], ["Absent rate %", data!.kpi.absentRate],
+      ] },
+      { title: "Grade distribution", headers: ["Grade", "Count"], rows: data!.gradeDistribution.map((g) => [g.grade, g.count]) },
+      { title: "Subject averages", headers: ["Subject", "Avg %", "Pass %"], rows: data!.subjectAverages.map((s) => [s.subject, s.avgPercent, s.passRate]) },
+      { title: "Class comparison", headers: ["Class", "Avg %"], rows: data!.classComparison.map((c) => [c.className, c.avgPercent]) },
+      { title: "Top performers", headers: ["Student", "Roll", "Class", "Avg %"], rows: data!.topPerformers.map((p) => [p.name, p.rollNo, p.className, p.avgPercent]) },
+    ]);
+  }
+
   return (
     <div className="space-y-6">
+      <ExportBar onCsv={exportCsv} />
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Average score" value={`${data.kpi.avgPercent}%`} tone="primary" />
@@ -187,15 +254,19 @@ function AcademicTab() {
           </ResponsiveContainer>
         </Card>
 
-        {/* Class comparison */}
-        <Card title="Class comparison" subtitle="Average score percentage by class">
+        {/* Class comparison — click a bar to open that class's students */}
+        <Card title="Class comparison" subtitle="Average score by class · click a bar to view students">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.classComparison} margin={{ top: 16 }}>
               <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.4} />
               <XAxis dataKey="className" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
               <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
               <Tooltip content={<ChartTip unit="%" />} cursor={{ fill: "var(--muted)", fillOpacity: 0.3 }} />
-              <Bar dataKey="avgPercent" fill={SERIES[2]} radius={[4, 4, 0, 0]} barSize={34}>
+              <Bar
+                dataKey="avgPercent" fill={SERIES[2]} radius={[4, 4, 0, 0]} barSize={34}
+                className="cursor-pointer"
+                onClick={() => navigate({ to: "/app/students" })}
+              >
                 <LabelList dataKey="avgPercent" position="top" formatter={(v: number) => `${v}%`} className="fill-foreground text-[11px]" />
               </Bar>
             </BarChart>
@@ -282,17 +353,33 @@ function Card({ title, subtitle, icon: Icon = GraduationCap, children }: { title
 
 /* ---------------------------- Attendance tab ---------------------------- */
 
-function AttendanceTab() {
+function AttendanceTab({ period }: { period: Period }) {
   const load = useServerFn(getAttendanceAnalytics);
   const [data, setData] = useState<Awaited<ReturnType<typeof getAttendanceAnalytics>> | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { load().then(setData).catch(() => {}).finally(() => setLoading(false)); }, [load]);
+  useEffect(() => {
+    setLoading(true);
+    load({ data: period }).then(setData).catch(() => {}).finally(() => setLoading(false));
+  }, [load, period.from, period.to]);
 
   if (loading) return <div className="py-16 text-center text-sm text-muted-foreground">Loading analytics…</div>;
-  if (!data || data.kpi.total === 0) return <Empty msg="No attendance recorded yet." />;
+  if (!data || data.kpi.total === 0) return <Empty msg="No attendance in this period." />;
+
+  function exportCsv() {
+    downloadCsv("attendance-analytics", [
+      { title: "Key metrics", headers: ["Metric", "Value"], rows: [
+        ["Overall present %", data!.kpi.presentPct], ["Days recorded", data!.kpi.days], ["Total records", data!.kpi.total],
+      ] },
+      { title: "Status breakdown", headers: ["Status", "Count"], rows: data!.kpi.breakdown.map((b) => [b.status, b.count]) },
+      { title: "Daily trend", headers: ["Date", "Present %"], rows: data!.dailyTrend.map((d) => [d.date, d.pct]) },
+      { title: "By class", headers: ["Class", "Present %"], rows: data!.byClass.map((c) => [c.className, c.pct]) },
+      { title: "Chronic absentees", headers: ["Student", "Class", "Absent days", "Total days", "Present %"], rows: data!.chronicAbsentees.map((c) => [c.name, c.className, c.absentDays, c.days, c.presentPct]) },
+    ]);
+  }
 
   return (
     <div className="space-y-6">
+      <ExportBar onCsv={exportCsv} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Overall present" value={`${data.kpi.presentPct}%`} tone={data.kpi.presentPct >= 90 ? "good" : "warn"} />
         <Kpi label="Days recorded" value={String(data.kpi.days)} />
@@ -365,17 +452,34 @@ function AttendanceTab() {
 
 /* ---------------------------- Finance tab ---------------------------- */
 
-function FinanceTab() {
+function FinanceTab({ period }: { period: Period }) {
   const load = useServerFn(getFinanceAnalytics);
   const [data, setData] = useState<Awaited<ReturnType<typeof getFinanceAnalytics>> | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { load().then(setData).catch(() => {}).finally(() => setLoading(false)); }, [load]);
+  useEffect(() => {
+    setLoading(true);
+    load({ data: period }).then(setData).catch(() => {}).finally(() => setLoading(false));
+  }, [load, period.from, period.to]);
 
   if (loading) return <div className="py-16 text-center text-sm text-muted-foreground">Loading analytics…</div>;
   if (!data || data.kpi.invoices === 0) return <Empty msg="No fee invoices yet." />;
 
+  function exportCsv() {
+    downloadCsv("finance-analytics", [
+      { title: "Key metrics", headers: ["Metric", "Value (₹)"], rows: [
+        ["Total billed", data!.kpi.billed], ["Collected", data!.kpi.collected],
+        ["Outstanding", data!.kpi.outstanding], ["Collection rate %", data!.kpi.collectionRate],
+      ] },
+      { title: "Invoice status", headers: ["Status", "Count"], rows: data!.statusSplit.map((s) => [s.status, s.count]) },
+      { title: "Monthly collection", headers: ["Month", "Amount (₹)"], rows: data!.monthly.map((m) => [m.month, m.amount]) },
+      { title: "By fee head", headers: ["Fee head", "Amount (₹)"], rows: data!.byHead.map((h) => [h.head, h.amount]) },
+      { title: "Top defaulters", headers: ["Student", "Class", "Outstanding (₹)"], rows: data!.defaulters.map((d) => [d.name, d.className, d.outstanding]) },
+    ]);
+  }
+
   return (
     <div className="space-y-6">
+      <ExportBar onCsv={exportCsv} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Total billed" value={inrCompact(data.kpi.billed)} />
         <Kpi label="Collected" value={inrCompact(data.kpi.collected)} tone="good" />
@@ -443,6 +547,7 @@ function FinanceTab() {
 /* ---------------------------- Enrollment tab ---------------------------- */
 
 function EnrollmentTab() {
+  const navigate = useNavigate();
   const load = useServerFn(getEnrollmentAnalytics);
   const [data, setData] = useState<Awaited<ReturnType<typeof getEnrollmentAnalytics>> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -452,8 +557,22 @@ function EnrollmentTab() {
   if (!data || data.kpi.students === 0) return <Empty msg="No students enrolled yet." />;
 
   const GENDER_COLORS: Record<string, string> = { Male: "#2a78d6", Female: "#e87ba4", Other: "#eda100" };
+
+  function exportCsv() {
+    downloadCsv("enrollment-analytics", [
+      { title: "Key metrics", headers: ["Metric", "Value"], rows: [
+        ["Students", data!.kpi.students], ["Teachers", data!.kpi.teachers],
+        ["Support staff", data!.kpi.employees], ["Student:teacher ratio", `${data!.kpi.ratio}:1`],
+      ] },
+      { title: "Gender", headers: ["Gender", "Count"], rows: data!.gender.map((g) => [g.label, g.count]) },
+      { title: "Students per class", headers: ["Class", "Count"], rows: data!.byClass.map((c) => [c.className, c.count]) },
+      { title: "Admission funnel", headers: ["Status", "Count"], rows: data!.funnel.map((f) => [f.status, f.count]) },
+    ]);
+  }
+
   return (
     <div className="space-y-6">
+      <ExportBar onCsv={exportCsv} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Students" value={data.kpi.students.toLocaleString("en-IN")} tone="primary" />
         <Kpi label="Teachers" value={String(data.kpi.teachers)} />
@@ -461,14 +580,14 @@ function EnrollmentTab() {
         <Kpi label="Student : teacher" value={`${data.kpi.ratio}:1`} tone={data.kpi.ratio <= 30 ? "good" : "warn"} />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="Students per class" subtitle="Active enrollment by class" icon={Users}>
+        <Card title="Students per class" subtitle="Active enrollment · click a bar to view students" icon={Users}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.byClass} margin={{ top: 16 }}>
               <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.4} />
               <XAxis dataKey="className" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
               <Tooltip content={<ChartTip />} cursor={{ fill: "var(--muted)", fillOpacity: 0.3 }} />
-              <Bar dataKey="count" fill="#2a78d6" radius={[4, 4, 0, 0]} barSize={34}>
+              <Bar dataKey="count" fill="#2a78d6" radius={[4, 4, 0, 0]} barSize={34} className="cursor-pointer" onClick={() => navigate({ to: "/app/students" })}>
                 <LabelList dataKey="count" position="top" className="fill-foreground text-[11px]" />
               </Bar>
             </BarChart>

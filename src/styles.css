@@ -169,3 +169,22 @@
 @utility text-pretty {
   text-wrap: pretty;
 }
+
+/* Print — used by analytics "Export PDF". Show only the print region. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  [data-print-region],
+  [data-print-region] * {
+    visibility: visible;
+  }
+  [data-print-region] {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+  }
+  [data-print-hide] {
+    display: none !important;
+  }
+}
