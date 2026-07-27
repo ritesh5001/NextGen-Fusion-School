@@ -1,11 +1,21 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, ResponsiveContainer, PieChart, Pie, Cell,
+  AreaChart, Area, Tooltip,
+} from "recharts";
+import { ArrowUpRight, BarChart3 } from "lucide-react";
 import { UpgradeNudge } from "@/components/upgrade";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { formatCurrencyCompact } from "@/lib/currency";
 import { getSession, setSession } from "@/lib/session";
+
+const inrCompact = (n: number) =>
+  n >= 10000000 ? `₹${(n / 10000000).toFixed(1)}Cr`
+  : n >= 100000 ? `₹${(n / 100000).toFixed(1)}L`
+  : n >= 1000 ? `₹${(n / 1000).toFixed(1)}K`
+  : `₹${n}`;
 
 export const Route = createFileRoute("/app/")({
   component: DashboardOverview,
@@ -23,7 +33,13 @@ function DashboardOverview() {
   const load = useServerFn(getDashboardStats);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const schoolName = getSession()?.user?.tenant?.name ?? "Your institution";
+  const session = getSession();
+  const schoolName = session?.user?.tenant?.name ?? "Your institution";
+  const perms = session?.user?.perms ?? [];
+  const roleKeys = session?.user?.roleKeys ?? [];
+  const canViewAnalytics =
+    (session?.user?.isSuperAdmin ?? false) || perms.includes("*") ||
+    perms.includes("reports.read") || roleKeys.includes("admin") || roleKeys.includes("principal");
 
   useEffect(() => {
     load()
@@ -100,6 +116,80 @@ function DashboardOverview() {
         ))}
       </div>
 
+      {/* At-a-glance analytics */}
+      {!loading && stats && (
+        <div className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground">At a glance</h2>
+            {canViewAnalytics && (
+              <Link to="/app/analytics" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:opacity-80">
+                <BarChart3 className="size-3.5" /> Full analytics <ArrowUpRight className="size-3" />
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {/* Enrollment by class */}
+            <MiniCard title="Enrollment by class">
+              {stats.enrollmentByClass.length ? (
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart data={stats.enrollmentByClass} margin={{ top: 6, right: 6, left: -22, bottom: 0 }}>
+                    <XAxis dataKey="className" tick={{ fontSize: 9 }} stroke="var(--muted-foreground)" tickFormatter={(v: string) => v.replace("Class ", "")} />
+                    <Tooltip content={<MiniTip />} cursor={{ fill: "var(--muted)", fillOpacity: 0.3 }} />
+                    <Bar dataKey="count" fill="#2a78d6" radius={[3, 3, 0, 0]} barSize={22} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <MiniEmpty />}
+            </MiniCard>
+
+            {/* Fee collection */}
+            <MiniCard title="Fee collection">
+              {stats.feeSplit.collected + stats.feeSplit.outstanding > 0 ? (
+                <div className="flex items-center gap-3">
+                  <ResponsiveContainer width="55%" height={140}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "Collected", value: stats.feeSplit.collected },
+                          { name: "Outstanding", value: stats.feeSplit.outstanding },
+                        ]}
+                        dataKey="value" innerRadius={34} outerRadius={58} paddingAngle={2} strokeWidth={2} stroke="var(--card, #fff)"
+                      >
+                        <Cell fill="#008300" />
+                        <Cell fill="#eda100" />
+                      </Pie>
+                      <Tooltip content={<MiniTip money />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <ul className="space-y-2 text-xs">
+                    <li className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-[#008300]" /> Collected <span className="font-semibold">{inrCompact(stats.feeSplit.collected)}</span></li>
+                    <li className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-[#eda100]" /> Outstanding <span className="font-semibold">{inrCompact(stats.feeSplit.outstanding)}</span></li>
+                  </ul>
+                </div>
+              ) : <MiniEmpty />}
+            </MiniCard>
+
+            {/* Attendance trend */}
+            <MiniCard title="Attendance (last 7 days)">
+              {stats.attendanceTrend.length ? (
+                <ResponsiveContainer width="100%" height={140}>
+                  <AreaChart data={stats.attendanceTrend} margin={{ top: 6, right: 6, left: -22, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="dashAtt" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#008300" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="#008300" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" tick={{ fontSize: 9 }} stroke="var(--muted-foreground)" />
+                    <Tooltip content={<MiniTip unit="%" />} />
+                    <Area type="monotone" dataKey="pct" stroke="#008300" strokeWidth={2} fill="url(#dashAtt)" dot={{ r: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : <MiniEmpty />}
+            </MiniCard>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent admissions */}
         <div className="overflow-hidden rounded-xl border border-border bg-card lg:col-span-2">
@@ -174,6 +264,36 @@ function DashboardOverview() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MiniCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-2 text-xs font-medium text-muted-foreground">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function MiniEmpty() {
+  return (
+    <div className="flex h-[140px] items-center justify-center text-xs text-muted-foreground">
+      No data yet
+    </div>
+  );
+}
+
+function MiniTip({ active, payload, unit = "", money = false }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0];
+  const name = p.payload.className ?? p.payload.date ?? p.name ?? "";
+  const val = money ? "₹" + Number(p.value).toLocaleString("en-IN") : `${p.value}${unit}`;
+  return (
+    <div className="rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs shadow-md">
+      {name && <div className="font-medium">{name}</div>}
+      <div className="text-muted-foreground">{val}</div>
     </div>
   );
 }
