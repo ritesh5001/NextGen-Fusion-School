@@ -135,9 +135,9 @@ function LibraryPage() {
   useEffect(() => {
     refreshBooks();
     refreshIssues();
-    listStu({ data: { page: 1, pageSize: 500 } }).then((s) =>
-      setStudents((s as { rows: typeof students }).rows),
-    );
+    listStu({ data: { page: 1, pageSize: 100 } })
+      .then((s) => setStudents((s as { rows: typeof students }).rows))
+      .catch(() => setStudents([]));
     listEmp().then((e) =>
       setEmployees(e as typeof employees),
     );

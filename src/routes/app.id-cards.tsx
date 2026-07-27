@@ -400,10 +400,11 @@ function IdCardsPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="flex max-h-[85vh] max-w-lg flex-col">
           <DialogHeader>
             <DialogTitle>{edit?.id ? "Edit" : "New"} template</DialogTitle>
           </DialogHeader>
+          <div className="-mr-2 flex-1 space-y-3 overflow-y-auto pr-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label>Name</Label>
@@ -532,6 +533,7 @@ function IdCardsPage() {
               />
               Set as default for this audience
             </label>
+          </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
