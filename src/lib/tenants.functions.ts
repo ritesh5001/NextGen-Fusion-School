@@ -71,16 +71,14 @@ export const createTenant = createServerFn({ method: "POST" })
       .limit(1);
     if (existing[0]) throw new Response("Slug already in use", { status: 409 });
 
-    const now = new Date();
-    const trialEnd = new Date(now.getTime() + 14 * 24 * 3600 * 1000);
-
+    // No trial — new tenants are active on their assigned plan immediately.
     const [t] = await db
       .insert(tenants)
       .values({
         slug: data.slug,
         name: data.name,
         plan: data.plan,
-        trialEndsAt: trialEnd,
+        subscriptionStatus: "active",
       })
       .returning();
 

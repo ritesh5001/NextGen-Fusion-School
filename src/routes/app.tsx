@@ -202,9 +202,6 @@ function AppLayout() {
   const plan = toPlanTier(user.tenant?.plan);
   const gated = !user.isSuperAdmin;
   const routeLocked = gated && !planAllowsPath(plan, pathname);
-  const trialActive = gated && !!user.tenant?.trialActive;
-  const trialDaysLeft = user.tenant?.trialDaysLeft ?? 0;
-  const licensedPlan = toPlanTier(user.tenant?.licensedPlan);
 
   return (
     <div className="flex min-h-screen w-full bg-surface-muted">
@@ -342,18 +339,6 @@ function AppLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          {trialActive && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-primary/30 bg-primary/10 px-8 py-2 text-xs font-medium text-primary">
-              <Sparkles className="size-3.5 shrink-0" />
-              <span>
-                Free trial — {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} of full
-                Max access left. After that your plan becomes {PLAN_LABELS[licensedPlan]}.
-              </span>
-              <Link to="/app/upgrade" className="ml-auto font-semibold underline">
-                View plans
-              </Link>
-            </div>
-          )}
           {license && (
             <div
               className={`border-b px-8 py-2 text-xs font-medium ${

@@ -1,15 +1,15 @@
 /**
- * Server-only entitlement resolution: turns a tenant's stored plan + trial
- * state into the plan that actually applies right now, plus usage caps.
+ * Server-only entitlement resolution: turns a tenant's stored plan into the
+ * plan that actually applies right now, plus usage caps.
  *
- *  - Every school starts with a 14-day full-feature (Max) trial. While the
- *    trial is active the effective plan is "max" regardless of the licensed
- *    tier. When it ends the school downgrades to the tier its license grants.
- *  - Student caps scale with the effective plan (Starter 500, Pro 2000, Max ∞).
+ *  - No trial period. Every deployment is a paid license, so the effective
+ *    plan is always exactly the tier the license grants.
+ *  - Student caps scale with the plan (Starter 500, Pro 2000, Max ∞).
+ *
+ * The `trialActive` / `trialDaysLeft` / `trialEndsAt` fields are retained (always
+ * inactive) so existing callers keep working, but nothing ever enters a trial.
  */
 import { toPlanTier, type PlanTier } from "./plans";
-
-export const TRIAL_DAYS = 14;
 
 /** Max active students per tier. null = unlimited. */
 export const STUDENT_CAP: Record<PlanTier, number | null> = {
@@ -37,30 +37,15 @@ export interface Entitlement {
 }
 
 export function computeEntitlement(t: TenantEntitlementRow): Entitlement {
+  // No trials: the effective plan is always exactly the licensed tier.
   const licensedPlan = toPlanTier(t.plan);
-  let effectivePlan = licensedPlan;
-  let trialActive = false;
-  let trialDaysLeft = 0;
-  let trialEndsAt: string | null = null;
-
-  if (t.subscriptionStatus === "trialing" && t.trialEndsAt) {
-    const end = new Date(t.trialEndsAt);
-    trialEndsAt = end.toISOString();
-    const ms = end.getTime() - Date.now();
-    if (ms > 0) {
-      trialActive = true;
-      trialDaysLeft = Math.max(1, Math.ceil(ms / 86_400_000));
-      effectivePlan = "max"; // full-feature trial
-    }
-  }
-
   return {
     licensedPlan,
-    effectivePlan,
-    trialActive,
-    trialDaysLeft,
-    trialEndsAt,
-    studentCap: STUDENT_CAP[effectivePlan],
+    effectivePlan: licensedPlan,
+    trialActive: false,
+    trialDaysLeft: 0,
+    trialEndsAt: null,
+    studentCap: STUDENT_CAP[licensedPlan],
   };
 }
 

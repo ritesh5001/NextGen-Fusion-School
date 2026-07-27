@@ -45,7 +45,6 @@ export const runSetup = createServerFn({ method: "POST" })
     const { tenants, users, roles, userRoles, rolePermissions, auditLog } = await import("@/db/schema");
     const { hashPassword } = await import("./auth-core.server");
     const { verifyLicense } = await import("./license.server");
-    const { TRIAL_DAYS } = await import("./entitlements.server");
     const db = getDb();
 
     // Gate registration on a valid, cryptographically-signed license key.
@@ -64,26 +63,23 @@ export const runSetup = createServerFn({ method: "POST" })
       );
     }
 
-    // Licensed tier from the key. Every school also starts on a 14-day
-    // full-feature trial (see entitlements.server.ts) which later settles to
-    // this tier.
+    // Licensed tier from the key. No trial period — every deployment is a paid
+    // license, so the school is active on its licensed tier immediately.
     const plan = status.payload.tier;
-    const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 86_400_000);
 
     const existing = await db.select({ id: tenants.id }).from(tenants).limit(1);
     if (existing[0]) {
       throw new Response("Setup already completed", { status: 400 });
     }
 
-    // 1. Create the institution (on trial)
+    // 1. Create the institution (active on its licensed plan, no trial)
     const [tenant] = await db
       .insert(tenants)
       .values({
         slug: data.schoolSlug,
         name: data.schoolName,
         plan, // licensed tier from the activated license key
-        subscriptionStatus: "trialing",
-        trialEndsAt,
+        subscriptionStatus: "active",
         licenseKey: data.licenseKey,
       })
       .returning({ id: tenants.id, slug: tenants.slug, name: tenants.name });
