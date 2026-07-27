@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowUpRight } from "lucide-react";
 import { UpgradeNudge } from "@/components/upgrade";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { formatCurrencyCompact } from "@/lib/currency";
-import { getSession } from "@/lib/session";
+import { getSession, setSession } from "@/lib/session";
 
 export const Route = createFileRoute("/app/")({
   component: DashboardOverview,
@@ -19,6 +19,7 @@ function fmtDate(d: string | Date) {
 }
 
 function DashboardOverview() {
+  const navigate = useNavigate();
   const load = useServerFn(getDashboardStats);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,24 +28,46 @@ function DashboardOverview() {
   useEffect(() => {
     load()
       .then(setStats)
-      .catch(() => {})
+      .catch((err) => {
+        // A 401 means the stored session token is no longer valid (e.g. after a
+        // secret rotation). Clear it and send the user to sign in again instead
+        // of leaving a broken dashboard.
+        if (err instanceof Response && err.status === 401) {
+          setSession(null);
+          navigate({ to: "/auth/login", search: { redirect: "/app" } });
+        }
+      })
       .finally(() => setLoading(false));
-  }, [load]);
+  }, [load, navigate]);
 
+  // Defensive: a stats object may arrive with missing fields (e.g. a failed or
+  // partial server response), so guard each value rather than assuming it exists.
   const kpis = [
     {
       label: "Total students",
-      value: stats ? stats.studentCount.toLocaleString("en-IN") : "—",
+      value:
+        stats?.studentCount != null
+          ? stats.studentCount.toLocaleString("en-IN")
+          : "—",
     },
-    { label: "Staff", value: stats ? stats.staffCount.toLocaleString("en-IN") : "—" },
+    {
+      label: "Staff",
+      value:
+        stats?.staffCount != null
+          ? stats.staffCount.toLocaleString("en-IN")
+          : "—",
+    },
     {
       label: "Fees collected",
-      value: stats ? formatCurrencyCompact(stats.feesCollected) : "—",
+      value:
+        stats?.feesCollected != null
+          ? formatCurrencyCompact(stats.feesCollected)
+          : "—",
     },
     {
       label: "Attendance today",
       value:
-        stats && stats.attendancePct != null ? `${stats.attendancePct}%` : "—",
+        stats?.attendancePct != null ? `${stats.attendancePct}%` : "—",
     },
   ];
 
