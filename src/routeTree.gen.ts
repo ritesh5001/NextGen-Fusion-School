@@ -52,6 +52,7 @@ import { Route as AppAppearanceRouteImport } from './routes/app.appearance'
 import { Route as AppAdmissionsRouteImport } from './routes/app.admissions'
 import { Route as AppAccountsRouteImport } from './routes/app.accounts'
 import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-years'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as TeachersSlugTeacherIdRouteImport } from './routes/teachers.$slug.$teacherId'
 import { Route as MarksheetExamIdStudentIdRouteImport } from './routes/marksheet.$examId.$studentId'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
@@ -271,6 +272,11 @@ const AppAcademicYearsRoute = AppAcademicYearsRouteImport.update({
   path: '/academic-years',
   getParentRoute: () => AppRoute,
 } as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeachersSlugTeacherIdRoute = TeachersSlugTeacherIdRouteImport.update({
   id: '/teachers/$slug/$teacherId',
   path: '/teachers/$slug/$teacherId',
@@ -294,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/portal': typeof PortalRoute
   '/setup': typeof SetupRoute
+  '/admin/login': typeof AdminLoginRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -341,6 +348,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/portal': typeof PortalRoute
   '/setup': typeof SetupRoute
+  '/admin/login': typeof AdminLoginRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -390,6 +398,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/portal': typeof PortalRoute
   '/setup': typeof SetupRoute
+  '/admin/login': typeof AdminLoginRoute
   '/app/academic-years': typeof AppAcademicYearsRoute
   '/app/accounts': typeof AppAccountsRoute
   '/app/admissions': typeof AppAdmissionsRoute
@@ -440,6 +449,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/portal'
     | '/setup'
+    | '/admin/login'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -487,6 +497,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/portal'
     | '/setup'
+    | '/admin/login'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -535,6 +546,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/portal'
     | '/setup'
+    | '/admin/login'
     | '/app/academic-years'
     | '/app/accounts'
     | '/app/admissions'
@@ -584,6 +596,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PortalRoute: typeof PortalRoute
   SetupRoute: typeof SetupRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   ApplySlugRoute: typeof ApplySlugRoute
   AuthForgotRoute: typeof AuthForgotRoute
   AuthLockRoute: typeof AuthLockRoute
@@ -898,6 +911,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAcademicYearsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teachers/$slug/$teacherId': {
       id: '/teachers/$slug/$teacherId'
       path: '/teachers/$slug/$teacherId'
@@ -1000,6 +1020,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PortalRoute: PortalRoute,
   SetupRoute: SetupRoute,
+  AdminLoginRoute: AdminLoginRoute,
   ApplySlugRoute: ApplySlugRoute,
   AuthForgotRoute: AuthForgotRoute,
   AuthLockRoute: AuthLockRoute,

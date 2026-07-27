@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { GraduationCap, Users, Briefcase } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { login } from "@/lib/auth.functions";
 import { getInstallStatus } from "@/lib/setup.functions";
 import { setSession, type SessionUser } from "@/lib/session";
@@ -11,32 +11,21 @@ import { Label } from "@/components/ui/label";
 
 const search = z.object({
   redirect: z.string().optional(),
-  as: z.enum(["teacher", "student", "staff"]).optional(),
 });
 
-export const Route = createFileRoute("/auth/login")({
+export const Route = createFileRoute("/admin/login")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Sign in — NextGen Fusion School" },
-      { name: "description", content: "Sign in to your school's NextGen Fusion School workspace." },
+      { title: "Admin sign in — NextGen Fusion School" },
+      { name: "description", content: "Administrator sign in." },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: LoginPage,
+  component: AdminLoginPage,
 });
 
-type Portal = "teacher" | "student" | "staff";
-
-// Admins sign in through the dedicated /admin/login route — intentionally not
-// offered here.
-const PORTALS: { key: Portal; label: string; blurb: string; icon: typeof Users }[] = [
-  { key: "teacher", label: "Teacher", blurb: "Classes, marks, attendance", icon: GraduationCap },
-  { key: "student", label: "Student", blurb: "Profile, results, fees", icon: Users },
-  { key: "staff", label: "Staff", blurb: "Librarian, hostel warden, support", icon: Briefcase },
-];
-
-/** Role keys that must sign in through the dedicated /admin/login route. */
+/** Role keys that are allowed to sign in through the admin portal. */
 const ADMIN_ROLE_KEYS = ["admin", "principal", "accountant", "hr"];
 
 function isAdminUser(user: SessionUser): boolean {
@@ -45,17 +34,9 @@ function isAdminUser(user: SessionUser): boolean {
   return rk.some((k) => ADMIN_ROLE_KEYS.includes(k));
 }
 
-function landingFor(user: SessionUser): "/portal" | "/app" {
-  if (user.isSuperAdmin) return "/app";
-  const rk = user.roleKeys ?? [];
-  if (rk.includes("student") || rk.includes("parent")) return "/portal";
-  return "/app";
-}
-
-function LoginPage() {
+function AdminLoginPage() {
   const nav = useNavigate();
-  const s = useSearch({ from: "/auth/login" });
-  const [portal, setPortal] = useState<Portal>(s.as ?? "teacher");
+  const s = useSearch({ from: "/admin/login" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,15 +61,13 @@ function LoginPage() {
     setLoading(true);
     try {
       const res = await login({ data: { email, password } });
-      // Admins have their own portal — send them there instead of signing in here.
-      if (isAdminUser(res.user)) {
-        setError("Administrators sign in on the admin page. Redirecting…");
-        nav({ to: "/admin/login" });
+      // Gate the admin portal: only admin-tier users may sign in here.
+      if (!isAdminUser(res.user)) {
+        setError("This account is not an administrator. Use the staff sign-in page.");
         return;
       }
       setSession(res);
-      const fallback = landingFor(res.user);
-      nav({ to: (s.redirect as "/app") ?? fallback });
+      nav({ to: (s.redirect as "/app") ?? "/app" });
     } catch (err) {
       const msg = err instanceof Response ? await err.text() : (err as Error).message;
       setError(msg || "Sign in failed");
@@ -106,32 +85,16 @@ function LoginPage() {
           </Link>
         </div>
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {institutionName ? `Access ${institutionName}.` : "Access your workspace."}
-          </p>
-
-          <div className="mt-6 grid grid-cols-2 gap-2">
-            {PORTALS.map((p) => {
-              const active = portal === p.key;
-              const Icon = p.icon;
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => setPortal(p.key)}
-                  className={`rounded-lg border p-3 text-left transition ${
-                    active
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                      : "border-border bg-background hover:border-border-strong"
-                  }`}
-                >
-                  <Icon className="size-4 text-primary" />
-                  <div className="mt-1.5 text-sm font-medium">{p.label}</div>
-                  <div className="text-[11px] text-muted-foreground">{p.blurb}</div>
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ShieldCheck className="size-5" />
+            </span>
+            <div>
+              <h1 className="font-display text-2xl font-semibold tracking-tight">Admin sign in</h1>
+              <p className="text-sm text-muted-foreground">
+                {institutionName ? `Manage ${institutionName}.` : "Administrator access only."}
+              </p>
+            </div>
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>
@@ -173,6 +136,13 @@ function LoginPage() {
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Not an administrator?{" "}
+            <Link to="/auth/login" className="font-medium text-primary hover:underline">
+              Staff &amp; student sign-in
+            </Link>
+          </p>
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Developed by{" "}
