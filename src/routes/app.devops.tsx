@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getSession } from "@/lib/session";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getSystemHealth,
@@ -75,6 +76,11 @@ function normalizeIntegrityChecks(value: unknown): IntegrityCheck[] {
 }
 
 function DevOpsPage() {
+  const navigate = useNavigate();
+  // Developer-only page — super-admin (vendor) exclusive. School admins/managers
+  // must never reach it, even by typing the URL.
+  const isSuperAdmin = getSession()?.user?.isSuperAdmin ?? false;
+
   const health = useServerFn(getSystemHealth);
   const logs = useServerFn(listSystemLogs);
   const clear = useServerFn(clearCache);
@@ -123,14 +129,22 @@ function DevOpsPage() {
   }
 
   useEffect(() => {
+    if (!isSuperAdmin) navigate({ to: "/app" });
+  }, [isSuperAdmin, navigate]);
+  useEffect(() => {
+    if (!isSuperAdmin) return;
     refreshHealth();
     refreshLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isSuperAdmin]);
   useEffect(() => {
+    if (!isSuperAdmin) return;
     refreshLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, sinceHours]);
+
+  // Non-super-admins are redirected by the effect above; render nothing meanwhile.
+  if (!isSuperAdmin) return null;
 
   return (
     <div className="p-8 space-y-8">

@@ -107,8 +107,8 @@ const nav: NavGroup[] = [
       { to: "/app/appearance", label: "Appearance", icon: Palette },
       { to: "/app/settings", label: "Settings", icon: Settings },
       { to: "/app/profile", label: "My Profile", icon: UserCog },
-      { to: "/app/devops", label: "Developer Utilities", icon: Wrench },
-      { to: "/app/licenses", label: "License Manager", icon: IdCard },
+      // Note: Developer Utilities and License Manager are intentionally omitted
+      // here — they are super-admin (developer) only and live in superAdminNav.
     ],
   },
 

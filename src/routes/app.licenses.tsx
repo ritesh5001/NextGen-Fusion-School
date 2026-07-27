@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getPlatformPublicKey, issueLicense } from "@/lib/license-issue.functions";
+import { getSession } from "@/lib/session";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +16,13 @@ export const Route = createFileRoute("/app/licenses")({
 });
 
 function LicensesPage() {
+  const navigate = useNavigate();
   const getPub = useServerFn(getPlatformPublicKey);
   const issue = useServerFn(issueLicense);
+
+  // Developer-only page: issuing license keys is a vendor (super-admin) action.
+  // School admins/managers must never reach it, even by typing the URL.
+  const isSuperAdmin = getSession()?.user?.isSuperAdmin ?? false;
 
   const [publicKey, setPublicKey] = useState<string>("");
   const [institution, setInstitution] = useState("");
@@ -26,10 +32,15 @@ function LicensesPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (!isSuperAdmin) navigate({ to: "/app" });
+  }, [isSuperAdmin, navigate]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
     getPub()
       .then((r) => setPublicKey(r.publicKey))
       .catch((e) => toast.error((e as Error).message || "Failed to load signing key"));
-  }, [getPub]);
+  }, [getPub, isSuperAdmin]);
 
   async function onIssue(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +63,9 @@ function LicensesPage() {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copied`);
   }
+
+  // Non-super-admins are redirected by the effect above; render nothing meanwhile.
+  if (!isSuperAdmin) return null;
 
   return (
     <div className="space-y-6 p-8">
