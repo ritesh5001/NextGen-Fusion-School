@@ -1,7 +1,9 @@
 /**
  * Runs the Drizzle migration folder against DATABASE_URL then seeds
- * baseline data: permission catalogue, system role templates, and
- * a super admin from SEED_SUPERADMIN_EMAIL / SEED_SUPERADMIN_PASSWORD.
+ * baseline data: permission catalogue and system role templates.
+ *
+ * The platform super admin is not seeded here — it is compiled into the app
+ * code (see PLATFORM_ADMIN_EMAIL in src/lib/auth.functions.ts).
  *
  * Usage:
  *   bun run db:setup
@@ -13,12 +15,10 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcryptjs";
 import {
   permissions,
   roles,
   rolePermissions,
-  users,
 } from "../src/db/schema";
 
 const url = process.env.DATABASE_URL;
@@ -138,29 +138,10 @@ async function main() {
     }
   }
 
-  /* ---------- Super admin bootstrap ---------- */
-  const email = process.env.SEED_SUPERADMIN_EMAIL;
-  const password = process.env.SEED_SUPERADMIN_PASSWORD;
-  if (email && password) {
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .limit(1);
-    if (!existing[0]) {
-      await db.insert(users).values({
-        email: email.toLowerCase(),
-        passwordHash: await bcrypt.hash(password, 12),
-        firstName: "Super",
-        lastName: "Admin",
-        isSuperAdmin: true,
-        tenantId: null,
-      });
-      console.log(`✓ Super admin created: ${email}`);
-    } else {
-      console.log(`• Super admin already exists: ${email}`);
-    }
-  }
+  /* ---------- Super admin ----------
+   * The platform super admin is compiled into the application code
+   * (see PLATFORM_ADMIN_EMAIL in src/lib/auth.functions.ts) — it is NOT
+   * seeded from the environment and has no row in the `users` table. */
 
   console.log("✓ Seed complete.");
 }

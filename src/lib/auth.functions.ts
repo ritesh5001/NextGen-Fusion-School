@@ -42,19 +42,28 @@ const changePwInput = z.object({
 /* -------------------- LOGIN -------------------- */
 /**
  * Hardcoded platform super admin. There is exactly one super admin per
- * deployment and its credentials are compiled into the code — not stored
- * in the database, not read from the environment. This account never
- * exists as a row in the `users` table.
+ * deployment; it is compiled into the code — not stored in the database.
+ * This account never exists as a row in the `users` table.
+ *
+ * The password is NOT stored in plaintext: only a bcrypt hash is embedded, so
+ * reading this source does not reveal the password (bcrypt is one-way). The
+ * password can optionally be rotated at deploy time without recompiling by
+ * setting PLATFORM_ADMIN_PASSWORD_HASH (a bcrypt hash) in the environment.
  */
 export const PLATFORM_ADMIN_ID = "00000000-0000-0000-0000-000000000001";
 export const PLATFORM_ADMIN_EMAIL = "nextgenfusion.devs@gmail.com";
-const PLATFORM_ADMIN_PASSWORD = "NextGenFusion5001@";
 
-function isPlatformAdmin(email: string, password: string): boolean {
-  return (
-    email.toLowerCase() === PLATFORM_ADMIN_EMAIL &&
-    password === PLATFORM_ADMIN_PASSWORD
-  );
+// bcrypt hash of the super-admin password (cost 12). One-way — safe in source.
+// To rotate: `node -e "console.log(require('bcryptjs').hashSync('newpass',12))"`
+// and paste the result here (or into PLATFORM_ADMIN_PASSWORD_HASH env var).
+const PLATFORM_ADMIN_PASSWORD_HASH =
+  "$2b$12$pag9JB4av/6HUzs4KXSRCeMZE/Hnp6u52A2atBPFD0FATubhT2VmS";
+
+async function isPlatformAdmin(email: string, password: string): Promise<boolean> {
+  if (email.toLowerCase() !== PLATFORM_ADMIN_EMAIL) return false;
+  const { verifyPassword } = await import("./auth-core.server");
+  const hash = process.env.PLATFORM_ADMIN_PASSWORD_HASH?.trim() || PLATFORM_ADMIN_PASSWORD_HASH;
+  return verifyPassword(password, hash);
 }
 
 export const login = createServerFn({ method: "POST" })
@@ -72,7 +81,7 @@ export const login = createServerFn({ method: "POST" })
     const db = getDb();
 
     /* ---------- Hardcoded platform admin: pure code, no DB row ---------- */
-    if (!data.tenantSlug && isPlatformAdmin(data.email, data.password)) {
+    if (!data.tenantSlug && (await isPlatformAdmin(data.email, data.password))) {
       // Adopt the sole tenant (single-institution mode) so tenant-scoped
       // modules work when the admin browses school data.
       const allT = await db
