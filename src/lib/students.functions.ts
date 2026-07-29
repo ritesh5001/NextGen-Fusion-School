@@ -210,6 +210,85 @@ export const getStudent = createServerFn({ method: "GET" })
     return row;
   });
 
+/** Full 360° profile for one student: bio + attendance + results + fees. */
+export const getStudentProfile = createServerFn({ method: "GET" })
+  .middleware([requireAccess({ perm: "students.read" })])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const tid = tenantOf(context);
+    const { getDb } = await import("@/db/client.server");
+    const { students, classes, sections, studentAttendance, marks, examSubjects, exams, subjects, feeInvoices } =
+      await import("@/db/schema");
+    const { and: A, eq: E, sql: S, desc: D } = await import("drizzle-orm");
+    const db = getDb();
+
+    const [student] = await db
+      .select({
+        id: students.id, admissionNo: students.admissionNo, rollNo: students.rollNo,
+        firstName: students.firstName, lastName: students.lastName, gender: students.gender,
+        dob: students.dob, phone: students.phone, email: students.email, address: students.address,
+        photoUrl: students.photoUrl, guardianName: students.guardianName, guardianPhone: students.guardianPhone,
+        guardianEmail: students.guardianEmail, isActive: students.isActive,
+        className: classes.name, sectionName: sections.name,
+      })
+      .from(students)
+      .leftJoin(classes, E(students.classId, classes.id))
+      .leftJoin(sections, E(students.sectionId, sections.id))
+      .where(A(E(students.id, data.id), E(students.tenantId, tid)))
+      .limit(1);
+    if (!student) throw new Response("Not found", { status: 404 });
+
+    const [att] = await db
+      .select({
+        total: S<number>`count(*)::int`,
+        present: S<number>`count(*) filter (where ${studentAttendance.status} in ('present','late'))::int`,
+      })
+      .from(studentAttendance)
+      .where(A(E(studentAttendance.tenantId, tid), E(studentAttendance.studentId, data.id)));
+
+    const results = await db
+      .select({
+        exam: exams.name, subject: subjects.name,
+        obtained: marks.marksObtained, max: examSubjects.maxMarks, absent: marks.isAbsent,
+      })
+      .from(marks)
+      .innerJoin(examSubjects, E(marks.examSubjectId, examSubjects.id))
+      .innerJoin(exams, E(examSubjects.examId, exams.id))
+      .innerJoin(subjects, E(examSubjects.subjectId, subjects.id))
+      .where(A(E(marks.tenantId, tid), E(marks.studentId, data.id)))
+      .orderBy(D(exams.startsOn))
+      .limit(30);
+
+    const [fee] = await db
+      .select({
+        billed: S<number>`coalesce(sum(${feeInvoices.totalAmount}),0)::int`,
+        paid: S<number>`coalesce(sum(${feeInvoices.paidAmount}),0)::int`,
+        invoices: S<number>`count(*)::int`,
+      })
+      .from(feeInvoices)
+      .where(A(E(feeInvoices.tenantId, tid), E(feeInvoices.studentId, data.id)));
+
+    return {
+      student,
+      attendance: {
+        total: att?.total ?? 0,
+        present: att?.present ?? 0,
+        pct: att && att.total > 0 ? Math.round((att.present / att.total) * 1000) / 10 : null,
+      },
+      results: results.map((r) => ({
+        exam: r.exam, subject: r.subject,
+        obtained: r.obtained, max: r.max, absent: r.absent,
+        pct: !r.absent && r.obtained != null && r.max ? Math.round((r.obtained / r.max) * 1000) / 10 : null,
+      })),
+      fees: {
+        billed: fee?.billed ?? 0,
+        paid: fee?.paid ?? 0,
+        outstanding: Math.max(0, (fee?.billed ?? 0) - (fee?.paid ?? 0)),
+        invoices: fee?.invoices ?? 0,
+      },
+    };
+  });
+
 /** Active-student count vs the plan cap — powers the usage meter / upsell. */
 export const getStudentUsage = createServerFn({ method: "GET" })
   .middleware([requireAccess({ perm: "students.read" })])

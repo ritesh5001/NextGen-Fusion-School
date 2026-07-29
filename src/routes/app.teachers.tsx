@@ -28,7 +28,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Plus, Pencil, Trash2, Search, Download } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
+import { downloadCsv } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/app/teachers")({
   component: TeachersPage,
@@ -42,6 +45,7 @@ type Teacher = {
   gender: string | null;
   phone: string | null;
   email: string | null;
+  photoUrl: string | null;
   qualification: string | null;
   designation: string | null;
   isActive: boolean;
@@ -79,15 +83,41 @@ function TeachersPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / 25));
 
+  async function exportCsv() {
+    try {
+      const res = (await list({
+        data: { query: query.trim() || undefined, page: 1, pageSize: 5000 },
+      })) as { rows: Teacher[] };
+      downloadCsv("teachers", [
+        {
+          title: "Teachers",
+          headers: ["Code", "Name", "Designation", "Qualification", "Phone", "Email", "Status"],
+          rows: res.rows.map((t) => [
+            t.employeeCode, `${t.firstName} ${t.lastName ?? ""}`.trim(),
+            t.designation, t.qualification, t.phone, t.email,
+            t.isActive ? "Active" : "Inactive",
+          ]),
+        },
+      ]);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
   return (
     <div className="p-8">
       <PageHeader
         title="Teachers"
         description="Faculty directory, contact and appointment details."
         action={
-          <Button onClick={() => setDlg({ open: true, edit: null })}>
-            <Plus className="mr-2 size-4" /> Add teacher
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportCsv}>
+              <Download className="mr-2 size-4" /> Export
+            </Button>
+            <Button onClick={() => setDlg({ open: true, edit: null })}>
+              <Plus className="mr-2 size-4" /> Add teacher
+            </Button>
+          </div>
         }
       />
 
@@ -140,12 +170,23 @@ function TeachersPage() {
                 <TableRow key={t.id}>
                   <TableCell className="font-mono text-xs">{t.employeeCode}</TableCell>
                   <TableCell className="font-medium">
-                    {t.firstName} {t.lastName ?? ""}
-                    {t.qualification ? (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {t.qualification}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-8 shrink-0">
+                        <AvatarImage src={t.photoUrl ?? undefined} alt="" />
+                        <AvatarFallback className="text-[11px]">
+                          {(t.firstName[0] ?? "").toUpperCase()}
+                          {(t.lastName?.[0] ?? "").toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>
+                        {t.firstName} {t.lastName ?? ""}
+                        {t.qualification ? (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {t.qualification}
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
+                    </div>
                   </TableCell>
                   <TableCell>{t.designation ?? "—"}</TableCell>
                   <TableCell>
@@ -171,7 +212,7 @@ function TeachersPage() {
                       variant="ghost"
                       size="icon"
                       onClick={async () => {
-                        if (!confirm(`Delete ${t.firstName}?`)) return;
+                        if (!confirmDelete("teacher", `${t.firstName} ${t.lastName ?? ""}`, t.employeeCode)) return;
                         try {
                           await del({ data: { id: t.id } });
                           toast.success("Deleted");

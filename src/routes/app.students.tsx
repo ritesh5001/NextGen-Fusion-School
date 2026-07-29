@@ -272,11 +272,21 @@ function StudentsPage() {
           </TableHeader>
           <TableBody>
             {rows === null ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                  Loading…
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  <TableCell><div className="h-4 w-16 animate-pulse rounded bg-muted" /></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+                      <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                    </div>
+                  </TableCell>
+                  <TableCell><div className="h-4 w-20 animate-pulse rounded bg-muted" /></TableCell>
+                  <TableCell><div className="h-4 w-28 animate-pulse rounded bg-muted" /></TableCell>
+                  <TableCell><div className="h-5 w-14 animate-pulse rounded-full bg-muted" /></TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              ))
             ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
@@ -297,7 +307,13 @@ function StudentsPage() {
                         </AvatarFallback>
                       </Avatar>
                       <span>
-                        {s.firstName} {s.lastName ?? ""}
+                        <Link
+                          to="/app/students/$id"
+                          params={{ id: s.id }}
+                          className="transition hover:text-primary hover:underline"
+                        >
+                          {s.firstName} {s.lastName ?? ""}
+                        </Link>
                         {s.rollNo ? (
                           <span className="ml-2 text-xs text-muted-foreground">
                             Roll #{s.rollNo}
