@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, X, Ban, Receipt, Printer } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/fees")({ component: FeesPage });
 
@@ -466,7 +467,7 @@ function StructuresTab() {
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      if (!confirm("Delete?")) return;
+                      if (!confirmDelete("fee record")) return;
                       try {
                         await del({ data: { id: r.id } });
                         refresh();

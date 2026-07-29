@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/students")({
   component: StudentsPage,
@@ -287,7 +288,7 @@ function StudentsPage() {
                       variant="ghost"
                       size="icon"
                       onClick={async () => {
-                        if (!confirm(`Delete ${s.firstName}?`)) return;
+                        if (!confirmDelete("student", `${s.firstName} ${s.lastName ?? ""}`, s.admissionNo)) return;
                         try {
                           await del({ data: { id: s.id } });
                           toast.success("Deleted");

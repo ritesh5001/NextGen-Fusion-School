@@ -63,6 +63,7 @@ import {
   Copy,
   Eye,
 } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/website")({
   component: WebsitePage,
@@ -725,7 +726,7 @@ function TestimonialPanel() {
                   variant="ghost"
                   size="icon"
                   onClick={async () => {
-                    if (!confirm("Delete?")) return;
+                    if (!confirmDelete("website item")) return;
                     await delFn({ data: { id: t.id } });
                     refresh();
                   }}
@@ -909,7 +910,7 @@ function GalleryPanel() {
                   size="icon"
                   className="h-7 w-7"
                   onClick={async () => {
-                    if (!confirm("Delete?")) return;
+                    if (!confirmDelete("website item")) return;
                     await delFn({ data: { id: g.id } });
                     refresh();
                   }}
@@ -1073,7 +1074,7 @@ function FaqPanel() {
                 variant="ghost"
                 size="icon"
                 onClick={async () => {
-                  if (!confirm("Delete?")) return;
+                  if (!confirmDelete("website item")) return;
                   await delFn({ data: { id: f.id } });
                   refresh();
                 }}
@@ -1242,7 +1243,7 @@ function TimelinePanel() {
                 variant="ghost"
                 size="icon"
                 onClick={async () => {
-                  if (!confirm("Delete?")) return;
+                  if (!confirmDelete("website item")) return;
                   await delFn({ data: { id: t.id } });
                   refresh();
                 }}

@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, ArrowDown, ArrowUp } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/accounts")({ component: AccountsPage });
 
@@ -184,7 +185,7 @@ function HeadsTab() {
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      if (!confirm("Delete?")) return;
+                      if (!confirmDelete("account entry")) return;
                       try {
                         await del({ data: { id: r.id } });
                         refresh();
@@ -428,7 +429,7 @@ function LedgerTab() {
                     variant="ghost"
                     size="sm"
                     onClick={async () => {
-                      if (!confirm("Delete?")) return;
+                      if (!confirmDelete("account entry")) return;
                       try {
                         await del({ data: { id: r.id } });
                         refresh();

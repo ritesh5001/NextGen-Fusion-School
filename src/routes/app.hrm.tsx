@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, Check, X, Pencil } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/hrm")({ component: HrmPage });
 
@@ -647,7 +648,7 @@ function LeaveTab() {
                         variant="ghost"
                         size="icon"
                         onClick={async () => {
-                          if (!confirm("Delete?")) return;
+                          if (!confirmDelete("HR record")) return;
                           try {
                             await delTypeFn({ data: { id: t.id } });
                             toast.success("Deleted");
@@ -1105,7 +1106,7 @@ function OutsideTab() {
                     variant="ghost"
                     size="icon"
                     onClick={async () => {
-                      if (!confirm("Delete?")) return;
+                      if (!confirmDelete("HR record")) return;
                       try {
                         await delFn({ data: { id: r.id } });
                         toast.success("Deleted");

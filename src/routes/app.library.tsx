@@ -47,6 +47,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Plus, Trash2, Pencil, ArrowLeftRight } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/library")({ component: LibraryPage });
 
@@ -442,7 +443,7 @@ function LibraryPage() {
                         variant="ghost"
                         size="icon"
                         onClick={async () => {
-                          if (!confirm("Delete record?")) return;
+                          if (!confirmDelete("library record")) return;
                           await delI({ data: { id: i.id } });
                           refreshIssues();
                         }}

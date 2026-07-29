@@ -49,6 +49,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Plus, Trash2, Pencil, LogOut } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/hostel")({ component: HostelPage });
 
@@ -499,7 +500,7 @@ function HostelPage() {
                         variant="ghost"
                         size="icon"
                         onClick={async () => {
-                          if (!confirm("Delete record?")) return;
+                          if (!confirmDelete("hostel record")) return;
                           await delA({ data: { id: a.id } });
                           refresh();
                           refreshRooms(selectedHostel || undefined);

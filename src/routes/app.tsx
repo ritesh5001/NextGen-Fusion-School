@@ -27,12 +27,18 @@ import {
   Sparkles,
   BarChart3,
   ArrowRight,
+  Menu,
+  X,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { getSession, setSession, subscribeSession, type SessionUser } from "@/lib/session";
 import { logout as logoutFn } from "@/lib/auth.functions";
 import { getLicenseStatus } from "@/lib/license.functions";
+import { listStudents } from "@/lib/students.functions";
 import {
   toPlanTier,
   planAllowsPath,
@@ -151,6 +157,23 @@ function AppLayout() {
   const [user, setUser] = useState<SessionUser | null>(() => getSession()?.user ?? null);
   const [ready, setReady] = useState(false);
   const [license, setLicense] = useState<{ label: string; tone: "warn" | "error" } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile drawer
+  const [paletteOpen, setPaletteOpen] = useState(false); // ⌘K command palette
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setSidebarOpen(false); }, [pathname]);
+
+  // ⌘K / Ctrl-K opens the command palette anywhere in the app.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     const s = getSession();
@@ -207,11 +230,31 @@ function AppLayout() {
 
   return (
     <div className="flex min-h-screen w-full bg-surface-muted">
-      {/* Sidebar */}
-      <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+      {/* Mobile drawer backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar — static on md+, slide-in drawer on mobile */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
           <span className="size-6 rounded-md bg-primary" />
           <span className="font-display text-sm font-semibold tracking-tight">NextGen Fusion School</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="ml-auto rounded-md p-1.5 text-sidebar-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground md:hidden"
+            aria-label="Close menu"
+          >
+            <X className="size-4" />
+          </button>
         </div>
 
         <div className="border-b border-sidebar-border p-3">
@@ -323,27 +366,51 @@ function AppLayout() {
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
-        <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-background/80 px-8 backdrop-blur">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search students, staff, invoices..."
-              className="w-full rounded-md border border-input bg-surface-muted py-2 pr-3 pl-9 text-sm outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-            />
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button className="rounded-md p-2 text-muted-foreground transition hover:bg-surface-muted hover:text-foreground">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:gap-4 md:px-8">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-md p-2 text-muted-foreground transition hover:bg-surface-muted hover:text-foreground md:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="size-5" />
+          </button>
+
+          {/* Search — opens the command palette */}
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="relative flex w-full max-w-md items-center gap-2 rounded-md border border-input bg-surface-muted py-2 pr-3 pl-9 text-left text-sm text-muted-foreground outline-none transition hover:border-ring/60 focus:border-ring focus:ring-2 focus:ring-ring/20"
+          >
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <span className="truncate">Search students, staff, invoices…</span>
+            <kbd className="ml-auto hidden shrink-0 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block">
+              ⌘K
+            </kbd>
+          </button>
+
+          <div className="ml-auto flex items-center gap-1 md:gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => navigate({ to: "/app/notifications" })}
+              className="rounded-md p-2 text-muted-foreground transition hover:bg-surface-muted hover:text-foreground"
+              aria-label="Notifications"
+            >
               <Bell className="size-4" />
             </button>
-            <div className="ml-2 size-8 rounded-full bg-primary/20 ring-1 ring-primary/30" />
+            <button
+              onClick={() => navigate({ to: "/app/profile" })}
+              className="ml-1 flex size-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary ring-1 ring-primary/30 transition hover:bg-primary/30"
+              title={displayName}
+              aria-label="My profile"
+            >
+              {(user.firstName?.[0] ?? user.email[0]).toUpperCase()}
+            </button>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto">
           {license && (
             <div
-              className={`border-b px-8 py-2 text-xs font-medium ${
+              className={`border-b px-4 py-2 text-xs font-medium md:px-8 ${
                 license.tone === "error"
                   ? "border-destructive/30 bg-destructive/10 text-destructive"
                   : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
@@ -357,7 +424,7 @@ function AppLayout() {
           ) : (
             <Outlet />
           )}
-          <footer className="border-t border-border bg-background px-8 py-3">
+          <footer className="border-t border-border bg-background px-4 py-3 md:px-8">
             <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
               <span>
                 © {new Date().getFullYear()} {schoolName}. Licensed to NextGen Fusion School.
@@ -377,6 +444,12 @@ function AppLayout() {
           </footer>
         </main>
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        groups={user.isSuperAdmin ? superAdminNav : nav}
+      />
     </div>
   );
 }
@@ -426,6 +499,205 @@ function UpgradePanel({ plan, path }: { plan: PlanTier; path: string }) {
             ? `Upgrade to the ${PLAN_LABELS[upgradeTo]} plan or higher to unlock this module.`
             : "Activate a license key that includes this module."}
         </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Theme toggle ---------------------------- */
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  function toggle() {
+    const root = document.documentElement;
+    const next = !root.classList.contains("dark");
+    root.classList.toggle("dark", next);
+    try {
+      window.localStorage.setItem("sms.theme.mode", next ? "dark" : "light");
+    } catch {
+      /* storage unavailable — the toggle still works for this session */
+    }
+    setDark(next);
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      className="rounded-md p-2 text-muted-foreground transition hover:bg-surface-muted hover:text-foreground"
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label="Toggle theme"
+    >
+      {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
+  );
+}
+
+/* -------------------------- Command palette (⌘K) -------------------------- */
+
+type PaletteResult = {
+  id: string;
+  label: string;
+  sub?: string;
+  to: string;
+  kind: "page" | "student" | "staff";
+};
+
+function CommandPalette({
+  open,
+  onClose,
+  groups,
+}: {
+  open: boolean;
+  onClose: () => void;
+  groups: NavGroup[];
+}) {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  const [people, setPeople] = useState<PaletteResult[]>([]);
+  const [cursor, setCursor] = useState(0);
+  const searchStudents = useServerFn(listStudents);
+
+  // Reset each time it opens.
+  useEffect(() => {
+    if (open) {
+      setQ("");
+      setPeople([]);
+      setCursor(0);
+    }
+  }, [open]);
+
+  // Debounced people search once the query is meaningful.
+  useEffect(() => {
+    if (!open || q.trim().length < 2) {
+      setPeople([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      searchStudents({ data: { query: q.trim(), page: 1, pageSize: 8 } })
+        .then((r) => {
+          const rows = (r as { rows: Array<Record<string, unknown>> }).rows ?? [];
+          setPeople(
+            rows.map((s) => ({
+              id: String(s.id),
+              label: [s.firstName, s.lastName].filter(Boolean).join(" "),
+              sub: [s.admissionNo, s.className].filter(Boolean).join(" · "),
+              to: "/app/students",
+              kind: "student" as const,
+            })),
+          );
+        })
+        .catch(() => setPeople([]));
+    }, 220);
+    return () => clearTimeout(t);
+  }, [q, open, searchStudents]);
+
+  // Flatten nav into searchable page results.
+  const pages: PaletteResult[] = groups.flatMap((g) =>
+    g.items.map((i) => ({
+      id: i.to,
+      label: i.label,
+      sub: g.label,
+      to: i.to,
+      kind: "page" as const,
+    })),
+  );
+  const term = q.trim().toLowerCase();
+  const matchedPages = term
+    ? pages.filter((p) => p.label.toLowerCase().includes(term) || (p.sub ?? "").toLowerCase().includes(term))
+    : pages.slice(0, 8);
+  const results = [...matchedPages, ...people];
+
+  function go(r: PaletteResult) {
+    onClose();
+    navigate({ to: r.to });
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") return onClose();
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCursor((c) => Math.min(c + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCursor((c) => Math.max(c - 1, 0));
+    } else if (e.key === "Enter" && results[cursor]) {
+      e.preventDefault();
+      go(results[cursor]);
+    }
+  }
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 pt-[12vh]">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search"
+        className="relative w-full max-w-xl overflow-hidden rounded-xl border border-border bg-popover shadow-2xl"
+      >
+        <div className="flex items-center gap-3 border-b border-border px-4">
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setCursor(0);
+            }}
+            onKeyDown={onKeyDown}
+            placeholder="Search pages, students…"
+            className="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-muted-foreground"
+          />
+          <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            Esc
+          </kbd>
+        </div>
+
+        <div className="max-h-[52vh] overflow-y-auto p-2">
+          {results.length === 0 ? (
+            <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+              No matches for “{q}”.
+            </div>
+          ) : (
+            results.map((r, i) => (
+              <button
+                key={`${r.kind}-${r.id}`}
+                onClick={() => go(r)}
+                onMouseEnter={() => setCursor(i)}
+                className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition ${
+                  i === cursor ? "bg-accent text-accent-foreground" : "hover:bg-surface-muted"
+                }`}
+              >
+                <span
+                  className={`flex size-6 shrink-0 items-center justify-center rounded text-[10px] font-bold uppercase ${
+                    r.kind === "student"
+                      ? "bg-primary/15 text-primary"
+                      : "bg-surface-muted text-muted-foreground"
+                  }`}
+                >
+                  {r.kind === "student" ? "S" : "›"}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{r.label}</span>
+                  {r.sub && <span className="block truncate text-xs text-muted-foreground">{r.sub}</span>}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+
+        <div className="flex items-center gap-4 border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
+          <span>↑↓ navigate</span>
+          <span>↵ open</span>
+          <span className="ml-auto">⌘K to toggle</span>
+        </div>
       </div>
     </div>
   );

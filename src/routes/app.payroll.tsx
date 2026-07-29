@@ -41,6 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Pencil, FileText, Printer } from "lucide-react";
+import { confirmDelete } from "@/lib/confirm";
 
 export const Route = createFileRoute("/app/payroll")({ component: PayrollPage });
 
@@ -282,7 +283,7 @@ function ComponentsTab() {
                       variant="ghost"
                       size="icon"
                       onClick={async () => {
-                        if (!confirm("Delete?")) return;
+                        if (!confirmDelete("payroll record")) return;
                         try {
                           await delFn({ data: { id: r.id } });
                           toast.success("Deleted");
