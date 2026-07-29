@@ -56,7 +56,7 @@ import { Route as AppAcademicYearsRouteImport } from './routes/app.academic-year
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as TeachersSlugTeacherIdRouteImport } from './routes/teachers.$slug.$teacherId'
 import { Route as MarksheetExamIdStudentIdRouteImport } from './routes/marksheet.$examId.$studentId'
-import { Route as AppStudentsIdRouteImport } from './routes/app.students.$id'
+import { Route as AppStudentIdRouteImport } from './routes/app.student.$id'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 
 const SetupRoute = SetupRouteImport.update({
@@ -295,10 +295,10 @@ const MarksheetExamIdStudentIdRoute =
     path: '/marksheet/$examId/$studentId',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppStudentsIdRoute = AppStudentsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppStudentsRoute,
+const AppStudentIdRoute = AppStudentIdRouteImport.update({
+  id: '/student/$id',
+  path: '/student/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   id: '/api/public/health',
@@ -339,7 +339,7 @@ export interface FileRoutesByFullPath {
   '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/students': typeof AppStudentsRouteWithChildren
+  '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/upgrade': typeof AppUpgradeRoute
@@ -353,7 +353,7 @@ export interface FileRoutesByFullPath {
   '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/health': typeof ApiPublicHealthRoute
-  '/app/students/$id': typeof AppStudentsIdRoute
+  '/app/student/$id': typeof AppStudentIdRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
   '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
@@ -389,7 +389,7 @@ export interface FileRoutesByTo {
   '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/students': typeof AppStudentsRouteWithChildren
+  '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/upgrade': typeof AppUpgradeRoute
@@ -403,7 +403,7 @@ export interface FileRoutesByTo {
   '/school/$slug': typeof SchoolSlugRoute
   '/app': typeof AppIndexRoute
   '/api/public/health': typeof ApiPublicHealthRoute
-  '/app/students/$id': typeof AppStudentsIdRoute
+  '/app/student/$id': typeof AppStudentIdRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
   '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
@@ -441,7 +441,7 @@ export interface FileRoutesById {
   '/app/reports': typeof AppReportsRoute
   '/app/roles': typeof AppRolesRoute
   '/app/settings': typeof AppSettingsRoute
-  '/app/students': typeof AppStudentsRouteWithChildren
+  '/app/students': typeof AppStudentsRoute
   '/app/subjects': typeof AppSubjectsRoute
   '/app/teachers': typeof AppTeachersRoute
   '/app/upgrade': typeof AppUpgradeRoute
@@ -455,7 +455,7 @@ export interface FileRoutesById {
   '/school/$slug': typeof SchoolSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/health': typeof ApiPublicHealthRoute
-  '/app/students/$id': typeof AppStudentsIdRoute
+  '/app/student/$id': typeof AppStudentIdRoute
   '/marksheet/$examId/$studentId': typeof MarksheetExamIdStudentIdRoute
   '/teachers/$slug/$teacherId': typeof TeachersSlugTeacherIdRoute
 }
@@ -508,7 +508,7 @@ export interface FileRouteTypes {
     | '/school/$slug'
     | '/app/'
     | '/api/public/health'
-    | '/app/students/$id'
+    | '/app/student/$id'
     | '/marksheet/$examId/$studentId'
     | '/teachers/$slug/$teacherId'
   fileRoutesByTo: FileRoutesByTo
@@ -558,7 +558,7 @@ export interface FileRouteTypes {
     | '/school/$slug'
     | '/app'
     | '/api/public/health'
-    | '/app/students/$id'
+    | '/app/student/$id'
     | '/marksheet/$examId/$studentId'
     | '/teachers/$slug/$teacherId'
   id:
@@ -609,7 +609,7 @@ export interface FileRouteTypes {
     | '/school/$slug'
     | '/app/'
     | '/api/public/health'
-    | '/app/students/$id'
+    | '/app/student/$id'
     | '/marksheet/$examId/$studentId'
     | '/teachers/$slug/$teacherId'
   fileRoutesById: FileRoutesById
@@ -963,12 +963,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarksheetExamIdStudentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/students/$id': {
-      id: '/app/students/$id'
-      path: '/$id'
-      fullPath: '/app/students/$id'
-      preLoaderRoute: typeof AppStudentsIdRouteImport
-      parentRoute: typeof AppStudentsRoute
+    '/app/student/$id': {
+      id: '/app/student/$id'
+      path: '/student/$id'
+      fullPath: '/app/student/$id'
+      preLoaderRoute: typeof AppStudentIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/api/public/health': {
       id: '/api/public/health'
@@ -979,18 +979,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AppStudentsRouteChildren {
-  AppStudentsIdRoute: typeof AppStudentsIdRoute
-}
-
-const AppStudentsRouteChildren: AppStudentsRouteChildren = {
-  AppStudentsIdRoute: AppStudentsIdRoute,
-}
-
-const AppStudentsRouteWithChildren = AppStudentsRoute._addFileChildren(
-  AppStudentsRouteChildren,
-)
 
 interface AppRouteChildren {
   AppAcademicYearsRoute: typeof AppAcademicYearsRoute
@@ -1019,13 +1007,14 @@ interface AppRouteChildren {
   AppReportsRoute: typeof AppReportsRoute
   AppRolesRoute: typeof AppRolesRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  AppStudentsRoute: typeof AppStudentsRouteWithChildren
+  AppStudentsRoute: typeof AppStudentsRoute
   AppSubjectsRoute: typeof AppSubjectsRoute
   AppTeachersRoute: typeof AppTeachersRoute
   AppUpgradeRoute: typeof AppUpgradeRoute
   AppUsersRoute: typeof AppUsersRoute
   AppWebsiteRoute: typeof AppWebsiteRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppStudentIdRoute: typeof AppStudentIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -1055,13 +1044,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportsRoute: AppReportsRoute,
   AppRolesRoute: AppRolesRoute,
   AppSettingsRoute: AppSettingsRoute,
-  AppStudentsRoute: AppStudentsRouteWithChildren,
+  AppStudentsRoute: AppStudentsRoute,
   AppSubjectsRoute: AppSubjectsRoute,
   AppTeachersRoute: AppTeachersRoute,
   AppUpgradeRoute: AppUpgradeRoute,
   AppUsersRoute: AppUsersRoute,
   AppWebsiteRoute: AppWebsiteRoute,
   AppIndexRoute: AppIndexRoute,
+  AppStudentIdRoute: AppStudentIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

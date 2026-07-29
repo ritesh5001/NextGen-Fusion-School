@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/datetime";
 import { formatCurrency } from "@/lib/currency";
 
-export const Route = createFileRoute("/app/students/$id")({
+export const Route = createFileRoute("/app/student/$id")({
   component: StudentProfile,
 });
 

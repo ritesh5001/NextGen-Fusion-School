@@ -308,7 +308,7 @@ function StudentsPage() {
                       </Avatar>
                       <span>
                         <Link
-                          to="/app/students/$id"
+                          to="/app/student/$id"
                           params={{ id: s.id }}
                           className="transition hover:text-primary hover:underline"
                         >
