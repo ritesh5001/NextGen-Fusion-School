@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/datetime";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listFeeHeads,
@@ -701,8 +702,8 @@ function InvoicesTab() {
                     {r.admissionNo}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">{r.issueDate}</TableCell>
-                <TableCell className="text-sm">{r.dueDate}</TableCell>
+                <TableCell className="text-sm">{formatDate(r.issueDate)}</TableCell>
+                <TableCell className="text-sm">{formatDate(r.dueDate)}</TableCell>
                 <TableCell className="text-right font-mono">
                   {fmt(r.totalAmount)}
                 </TableCell>

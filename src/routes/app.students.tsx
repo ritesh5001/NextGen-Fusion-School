@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -40,8 +41,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download } from "lucide-react";
 import { confirmDelete } from "@/lib/confirm";
+import { downloadCsv } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/app/students")({
   component: StudentsPage,
@@ -56,6 +58,7 @@ type Student = {
   firstName: string;
   lastName: string | null;
   gender: string | null;
+  photoUrl: string | null;
   guardianName: string | null;
   guardianPhone: string | null;
   classId: string | null;
@@ -145,6 +148,34 @@ function StudentsPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / 25));
 
+  // Export the FULL filtered roster (not just the current page).
+  async function exportCsv() {
+    try {
+      const res = (await list({
+        data: {
+          query: query.trim() || undefined,
+          classId: classFilter === ALL ? undefined : classFilter,
+          sectionId: sectionFilter === ALL ? undefined : sectionFilter,
+          page: 1,
+          pageSize: 5000,
+        },
+      })) as { rows: Student[] };
+      downloadCsv("students", [
+        {
+          title: "Students",
+          headers: ["Admission #", "Roll #", "Name", "Class", "Section", "Guardian", "Guardian phone", "Status"],
+          rows: res.rows.map((s) => [
+            s.admissionNo, s.rollNo, `${s.firstName} ${s.lastName ?? ""}`.trim(),
+            s.className, s.sectionName, s.guardianName, s.guardianPhone,
+            s.isActive ? "Active" : "Inactive",
+          ]),
+        },
+      ]);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
   const filteredFilterSections =
     classFilter === ALL ? sections : sections.filter((s) => s.classId === classFilter);
 
@@ -154,9 +185,14 @@ function StudentsPage() {
         title="Students"
         description="Full student roster with search and filtering."
         action={
-          <Button onClick={openNew}>
-            <Plus className="mr-2 size-4" /> Add student
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportCsv}>
+              <Download className="mr-2 size-4" /> Export
+            </Button>
+            <Button onClick={openNew}>
+              <Plus className="mr-2 size-4" /> Add student
+            </Button>
+          </div>
         }
       />
 
@@ -252,12 +288,23 @@ function StudentsPage() {
                 <TableRow key={s.id}>
                   <TableCell className="font-mono text-xs">{s.admissionNo}</TableCell>
                   <TableCell className="font-medium">
-                    {s.firstName} {s.lastName ?? ""}
-                    {s.rollNo ? (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        Roll #{s.rollNo}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-8 shrink-0">
+                        <AvatarImage src={s.photoUrl ?? undefined} alt="" />
+                        <AvatarFallback className="text-[11px]">
+                          {(s.firstName[0] ?? "").toUpperCase()}
+                          {(s.lastName?.[0] ?? "").toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>
+                        {s.firstName} {s.lastName ?? ""}
+                        {s.rollNo ? (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            Roll #{s.rollNo}
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {s.className ? (
