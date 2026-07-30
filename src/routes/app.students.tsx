@@ -6,8 +6,10 @@ import {
   listStudents,
   saveStudent,
   deleteStudent,
+  getStudent,
   getStudentUsage,
 } from "@/lib/students.functions";
+import { ImagePicker } from "@/components/image-picker";
 import {
   listClasses,
   listSections,
@@ -74,6 +76,7 @@ function StudentsPage() {
   const list = useServerFn(listStudents);
   const save = useServerFn(saveStudent);
   const del = useServerFn(deleteStudent);
+  const getOne = useServerFn(getStudent);
   const listC = useServerFn(listClasses);
   const listS = useServerFn(listSections);
 
@@ -94,6 +97,10 @@ function StudentsPage() {
   // sections available in the form (filtered by chosen classId)
   const [formSections, setFormSections] = useState<SectionOpt[]>([]);
   const [formClassId, setFormClassId] = useState<string>("");
+  const [photoUrl, setPhotoUrl] = useState<string>("");
+  // full record (all columns) loaded when editing, for defaultValues
+  const [full, setFull] = useState<Record<string, unknown> | null>(null);
+  const fv = (k: string) => (full?.[k] == null ? "" : String(full[k]));
 
   const refresh = useCallback(async () => {
     try {
@@ -133,12 +140,24 @@ function StudentsPage() {
   function openNew() {
     setFormClassId("");
     setFormSections([]);
+    setPhotoUrl("");
+    setFull(null);
     setDlg({ open: true, edit: null });
   }
-  function openEdit(s: Student) {
+  async function openEdit(s: Student) {
     setFormClassId(s.classId ?? "");
     setFormSections(sections.filter((x) => x.classId === s.classId));
+    setPhotoUrl(s.photoUrl ?? "");
+    setFull(null);
     setDlg({ open: true, edit: s });
+    // Fetch the full record so DOB / phone / email / address preload.
+    try {
+      const rec = (await getOne({ data: { id: s.id } })) as Record<string, unknown>;
+      setFull(rec);
+      if (rec.photoUrl) setPhotoUrl(String(rec.photoUrl));
+    } catch {
+      /* keep the list-row values as fallback */
+    }
   }
 
   function onFormClassChange(cid: string) {
@@ -398,11 +417,12 @@ function StudentsPage() {
       </div>
 
       <Dialog open={dlg.open} onOpenChange={(o) => setDlg({ open: o, edit: dlg.edit })}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{dlg.edit ? "Edit student" : "New student"}</DialogTitle>
           </DialogHeader>
           <form
+            key={full ? `full-${String(full.id)}` : dlg.edit?.id ?? "new"}
             onSubmit={async (e) => {
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
@@ -415,6 +435,7 @@ function StudentsPage() {
                     firstName: String(fd.get("firstName") ?? ""),
                     lastName: String(fd.get("lastName") ?? "") || null,
                     gender: (fd.get("gender") as "male" | "female" | "other") || null,
+                    photoUrl: photoUrl || null,
                     dob: String(fd.get("dob") ?? "") || null,
                     phone: String(fd.get("phone") ?? "") || null,
                     email: String(fd.get("email") ?? "") || null,
@@ -435,6 +456,29 @@ function StudentsPage() {
             }}
             className="space-y-4"
           >
+            {/* Photo */}
+            <div>
+              <Label>Photo</Label>
+              <div className="mt-1 flex items-center gap-4">
+                <Avatar className="size-16 shrink-0">
+                  <AvatarImage src={photoUrl || undefined} alt="" />
+                  <AvatarFallback className="text-base">
+                    {(dlg.edit?.firstName?.[0] ?? "S").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <ImagePicker
+                    value={photoUrl}
+                    onChange={setPhotoUrl}
+                    folder="students"
+                    aspect="auto"
+                    placeholder="Upload student photo"
+                    className="max-w-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="admissionNo">Admission #</Label>
@@ -478,7 +522,7 @@ function StudentsPage() {
               </div>
               <div>
                 <Label htmlFor="dob">Date of birth</Label>
-                <Input id="dob" name="dob" type="date" />
+                <Input id="dob" name="dob" type="date" defaultValue={fv("dob").slice(0, 10)} />
               </div>
               <div>
                 <Label htmlFor="s-classId">Class</Label>
@@ -513,7 +557,7 @@ function StudentsPage() {
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" name="phone" />
+                <Input id="phone" name="phone" defaultValue={fv("phone")} />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -535,16 +579,16 @@ function StudentsPage() {
               </div>
               <div>
                 <Label htmlFor="guardianEmail">Guardian email</Label>
-                <Input id="guardianEmail" name="guardianEmail" type="email" />
+                <Input id="guardianEmail" name="guardianEmail" type="email" defaultValue={fv("guardianEmail")} />
               </div>
             </div>
             <div>
               <Label htmlFor="email">Student email</Label>
-              <Input id="email" name="email" type="email" />
+              <Input id="email" name="email" type="email" defaultValue={fv("email")} />
             </div>
             <div>
               <Label htmlFor="address">Address</Label>
-              <Input id="address" name="address" />
+              <Input id="address" name="address" defaultValue={fv("address")} />
             </div>
             <DialogFooter>
               <Button type="submit">Save student</Button>
