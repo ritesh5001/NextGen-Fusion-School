@@ -39,6 +39,7 @@ import { getSession, setSession, subscribeSession, type SessionUser } from "@/li
 import { logout as logoutFn } from "@/lib/auth.functions";
 import { getLicenseStatus } from "@/lib/license.functions";
 import { listStudents } from "@/lib/students.functions";
+import { getSiteMeta } from "@/lib/website.functions";
 import {
   toPlanTier,
   planAllowsPath,
@@ -159,6 +160,15 @@ function AppLayout() {
   const [license, setLicense] = useState<{ label: string; tone: "warn" | "error" } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false); // mobile drawer
   const [paletteOpen, setPaletteOpen] = useState(false); // ⌘K command palette
+  const [logoUrl, setLogoUrl] = useState<string | null>(null); // school logo (from site meta)
+  const loadSiteMeta = useServerFn(getSiteMeta);
+
+  // Load the school's logo once for the sidebar/topbar brand.
+  useEffect(() => {
+    loadSiteMeta()
+      .then((m) => setLogoUrl((m as { logoUrl?: string | null } | null)?.logoUrl ?? null))
+      .catch(() => {});
+  }, [loadSiteMeta]);
 
   // Close the mobile drawer whenever the route changes.
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
@@ -246,8 +256,18 @@ function AppLayout() {
         }`}
       >
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
-          <span className="size-6 rounded-md bg-primary" />
-          <span className="font-display text-sm font-semibold tracking-tight">NextGen Fusion School</span>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              className="size-7 shrink-0 rounded-md object-contain"
+            />
+          ) : (
+            <span className="size-6 shrink-0 rounded-md bg-primary" />
+          )}
+          <span className="truncate font-display text-sm font-semibold tracking-tight">
+            {schoolName}
+          </span>
           <button
             onClick={() => setSidebarOpen(false)}
             className="ml-auto rounded-md p-1.5 text-sidebar-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground md:hidden"

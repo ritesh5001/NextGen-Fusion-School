@@ -14,7 +14,7 @@ function tenantOf(context: { tenantId: string | null }) {
 const listInput = z.object({
   query: z.string().optional(),
   page: z.number().int().min(1).default(1),
-  pageSize: z.number().int().min(1).max(100).default(25),
+  pageSize: z.number().int().min(1).max(5000).default(25),
 });
 
 export const listTeachers = createServerFn({ method: "GET" })

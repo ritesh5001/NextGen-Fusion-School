@@ -16,7 +16,7 @@ const listInput = z.object({
   classId: z.string().uuid().optional(),
   sectionId: z.string().uuid().optional(),
   page: z.number().int().min(1).default(1),
-  pageSize: z.number().int().min(1).max(100).default(25),
+  pageSize: z.number().int().min(1).max(5000).default(25),
 });
 
 export const listStudents = createServerFn({ method: "GET" })

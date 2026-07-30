@@ -52,7 +52,18 @@ export function ImagePicker({
     }
     setUploading(true);
     try {
-      const auth = await fetchAuth();
+      let auth;
+      try {
+        auth = await fetchAuth();
+      } catch (e) {
+        if (e instanceof Response && e.status === 401) {
+          throw new Error("Your session expired. Please sign in again, then retry the upload.");
+        }
+        if (e instanceof Response) {
+          throw new Error(await e.text());
+        }
+        throw e;
+      }
       const fd = new FormData();
       fd.append("file", file);
       fd.append("fileName", file.name);
